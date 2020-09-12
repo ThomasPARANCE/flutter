@@ -1,6 +1,8 @@
-// Copyright 2017 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'dart:ui';
 
@@ -21,14 +23,10 @@ void main() {
 
   testWidgets('scrollable exposes the correct semantic actions', (WidgetTester tester) async {
     semantics = SemanticsTester(tester);
-
-    final List<Widget> textWidgets = <Widget>[];
-    for (int i = 0; i < 80; i++)
-      textWidgets.add(Text('$i'));
     await tester.pumpWidget(
       Directionality(
         textDirection: TextDirection.ltr,
-        child: ListView(children: textWidgets),
+        child: ListView(children: List<Widget>.generate(80, (int i) => Text('$i'))),
       ),
     );
 
@@ -54,12 +52,12 @@ void main() {
 
     const double kItemHeight = 40.0;
 
-    final List<Widget> containers = <Widget>[];
-    for (int i = 0; i < 80; i++)
-      containers.add(MergeSemantics(child: Container(
+    final List<Widget> containers = List<Widget>.generate(80, (int i) => MergeSemantics(
+      child: Container(
         height: kItemHeight,
         child: Text('container $i', textDirection: TextDirection.ltr),
-      )));
+      ),
+    ));
 
     final ScrollController scrollController = ScrollController(
       initialScrollOffset: kItemHeight / 2,
@@ -93,12 +91,12 @@ void main() {
     const double kItemHeight = 100.0;
     const double kExpandedAppBarHeight = 56.0;
 
-    final List<Widget> containers = <Widget>[];
-    for (int i = 0; i < 80; i++)
-      containers.add(MergeSemantics(child: Container(
+    final List<Widget> containers = List<Widget>.generate(80, (int i) => MergeSemantics(
+      child: Container(
         height: kItemHeight,
         child: Text('container $i'),
-      )));
+      ),
+    ));
 
     final ScrollController scrollController = ScrollController(
       initialScrollOffset: kItemHeight / 2,
@@ -219,12 +217,9 @@ void main() {
   testWidgets('correct scrollProgress', (WidgetTester tester) async {
     semantics = SemanticsTester(tester);
 
-    final List<Widget> textWidgets = <Widget>[];
-    for (int i = 0; i < 80; i++)
-      textWidgets.add(Text('$i'));
     await tester.pumpWidget(Directionality(
       textDirection: TextDirection.ltr,
-      child: ListView(children: textWidgets),
+      child: ListView(children: List<Widget>.generate(80, (int i) => Text('$i'))),
     ));
 
     expect(semantics, includesNodeWith(
@@ -260,7 +255,7 @@ void main() {
     ));
 
     semantics.dispose();
-  }, skip: isBrowser);
+  });
 
   testWidgets('correct scrollProgress for unbound', (WidgetTester tester) async {
     semantics = SemanticsTester(tester);
@@ -315,12 +310,10 @@ void main() {
   testWidgets('Semantics tree is populated mid-scroll', (WidgetTester tester) async {
     semantics = SemanticsTester(tester);
 
-    final List<Widget> children = <Widget>[];
-    for (int i = 0; i < 80; i++)
-      children.add(Container(
-        child: Text('Item $i'),
-        height: 40.0,
-      ));
+    final List<Widget> children = List<Widget>.generate(80, (int i) => Container(
+      child: Text('Item $i'),
+      height: 40.0,
+    ));
     await tester.pumpWidget(
       Directionality(
         textDirection: TextDirection.ltr,

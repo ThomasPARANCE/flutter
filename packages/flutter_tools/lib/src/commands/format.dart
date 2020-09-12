@@ -1,12 +1,13 @@
-// Copyright 2016 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 import 'dart:async';
 
+import '../artifacts.dart';
 import '../base/common.dart';
 import '../base/process.dart';
-import '../dart/sdk.dart';
+import '../globals.dart' as globals;
 import '../runner/flutter_command.dart';
 
 class FormatCommand extends FlutterCommand {
@@ -45,11 +46,6 @@ class FormatCommand extends FlutterCommand {
   final String description = 'Format one or more dart files.';
 
   @override
-  Future<Set<DevelopmentArtifact>> get requiredArtifacts async => const <DevelopmentArtifact>{
-    DevelopmentArtifact.universal,
-  };
-
-  @override
   String get invocation => '${runner.executableName} $name <one or more paths>';
 
   @override
@@ -65,21 +61,24 @@ class FormatCommand extends FlutterCommand {
       );
     }
 
-    final String dartfmt = sdkBinaryName('dartfmt');
+    final String dartSdk = globals.artifacts.getArtifactPath(Artifact.engineDartSdkPath);
+    final String dartBinary = globals.artifacts.getArtifactPath(Artifact.engineDartBinary);
     final List<String> command = <String>[
-      dartfmt,
-      if (argResults['dry-run']) '-n',
-      if (argResults['machine']) '-m',
+      dartBinary,
+      globals.fs.path.join(dartSdk, 'bin', 'snapshots', 'dartfmt.dart.snapshot'),
+      if (boolArg('dry-run')) '-n',
+      if (boolArg('machine')) '-m',
       if (argResults['line-length'] != null) '-l ${argResults['line-length']}',
-      if (!argResults['dry-run'] && !argResults['machine']) '-w',
-      if (argResults['set-exit-if-changed']) '--set-exit-if-changed',
+      if (!boolArg('dry-run') && !boolArg('machine')) '-w',
+      if (boolArg('set-exit-if-changed')) '--set-exit-if-changed',
       ...argResults.rest,
     ];
 
-    final int result = await runCommandAndStreamOutput(command);
-    if (result != 0)
+    final int result = await processUtils.stream(command);
+    if (result != 0) {
       throwToolExit('Formatting failed: $result', exitCode: result);
+    }
 
-    return null;
+    return FlutterCommandResult.success();
   }
 }

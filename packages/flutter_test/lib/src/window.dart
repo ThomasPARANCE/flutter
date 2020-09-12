@@ -1,4 +1,4 @@
-// Copyright 2018 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -87,22 +87,6 @@ class TestWindow implements Window {
   }
 
   @override
-  double get physicalDepth => _physicalDepthTestValue ?? _window.physicalDepth;
-  double _physicalDepthTestValue;
-  /// Hides the real physical depth and reports the given
-  /// [physicalDepthTestValue] instead.
-  set physicalDepthTestValue (double physicalDepthTestValue) {
-    _physicalDepthTestValue = physicalDepthTestValue;
-    onMetricsChanged();
-  }
-  /// Deletes any existing test physical depth and returns to using the real
-  /// physical depth.
-  void clearPhysicalDepthTestValue() {
-    _physicalDepthTestValue = null;
-    onMetricsChanged();
-  }
-
-  @override
   WindowPadding get viewInsets => _viewInsetsTestValue ??  _window.viewInsets;
   WindowPadding _viewInsetsTestValue;
   /// Hides the real view insets and reports the given [viewInsetsTestValue]
@@ -145,6 +129,20 @@ class TestWindow implements Window {
   /// Deletes any existing test padding and returns to using the real padding.
   void clearPaddingTestValue() {
     _paddingTestValue = null;
+    onMetricsChanged();
+  }
+
+  @override
+  WindowPadding get systemGestureInsets => _systemGestureInsetsTestValue ?? _window.systemGestureInsets;
+  WindowPadding _systemGestureInsetsTestValue;
+  /// Hides the real system gesture insets and reports the given [systemGestureInsetsTestValue] instead.
+  set systemGestureInsetsTestValue(WindowPadding systemGestureInsetsTestValue) {
+    _systemGestureInsetsTestValue = systemGestureInsetsTestValue;
+    onMetricsChanged();
+  }
+  /// Deletes any existing test system gesture insets and returns to using the real system gesture insets.
+  void clearSystemGestureInsetsTestValue() {
+    _systemGestureInsetsTestValue = null;
     onMetricsChanged();
   }
 
@@ -404,7 +402,6 @@ class TestWindow implements Window {
     clearLocalesTestValue();
     clearPaddingTestValue();
     clearPhysicalSizeTestValue();
-    clearPhysicalDepthTestValue();
     clearSemanticsEnabledTestValue();
     clearTextScaleFactorTestValue();
     clearViewInsetsTestValue();

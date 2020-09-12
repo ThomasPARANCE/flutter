@@ -1,6 +1,8 @@
-// Copyright 2019 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'dart:ui';
 
@@ -98,7 +100,7 @@ void main() {
     );
     expect(
       flutterError.diagnostics.singleWhere((DiagnosticsNode node) => node.level == DiagnosticLevel.hint).toString(),
-      'This usually indicates an error in the Flutter framework itself.'
+      'This usually indicates an error in the Flutter framework itself.',
     );
   });
 }

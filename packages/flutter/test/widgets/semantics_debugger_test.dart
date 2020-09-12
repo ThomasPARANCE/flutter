@@ -1,6 +1,8 @@
-// Copyright 2015 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'dart:ui' show window;
 
@@ -10,6 +12,16 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('SemanticsDebugger will schedule a frame', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      SemanticsDebugger(
+        child: Container(),
+      ),
+    );
+
+    expect(tester.binding.hasScheduledFrame, isTrue);
+  });
+
   testWidgets('SemanticsDebugger smoke test', (WidgetTester tester) async {
 
     // This is a smoketest to verify that adding a debugger doesn't crash.
@@ -452,10 +464,33 @@ void main() {
       ),
     );
 
+    final dynamic semanticsDebuggerPainter = _getSemanticsDebuggerPainter(debuggerKey: debugger, tester: tester);
+    final RenderObject renderTextfield = tester.renderObject(find.descendant(of: find.byKey(textField), matching: find.byType(Semantics)).first);
+
     expect(
-      _getMessageShownInSemanticsDebugger(widgetKey: textField, debuggerKey: debugger, tester: tester),
+      semanticsDebuggerPainter.getMessage(renderTextfield.debugSemantics),
       'textfield',
     );
+  });
+
+  testWidgets('SemanticsDebugger label style is used in the painter.', (WidgetTester tester) async {
+    final UniqueKey debugger = UniqueKey();
+    const TextStyle labelStyle = TextStyle(color: Colors.amber);
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: SemanticsDebugger(
+          key: debugger,
+          labelStyle: labelStyle,
+          child: Semantics(
+            label: 'label',
+            textDirection: TextDirection.ltr,
+          ),
+        ),
+      ),
+    );
+
+    expect(_getSemanticsDebuggerPainter(debuggerKey: debugger, tester: tester).labelStyle, labelStyle);
   });
 }
 
@@ -464,11 +499,19 @@ String _getMessageShownInSemanticsDebugger({
   @required Key debuggerKey,
   @required WidgetTester tester,
 }) {
+  final dynamic semanticsDebuggerPainter = _getSemanticsDebuggerPainter(debuggerKey: debuggerKey, tester: tester);
+  return semanticsDebuggerPainter.getMessage(tester.renderObject(find.byKey(widgetKey)).debugSemantics) as String;
+}
+
+dynamic _getSemanticsDebuggerPainter({
+  @required Key debuggerKey,
+  @required WidgetTester tester,
+}) {
   final CustomPaint customPaint = tester.widgetList(find.descendant(
     of: find.byKey(debuggerKey),
     matching: find.byType(CustomPaint),
-  )).first;
+  )).first as CustomPaint;
   final dynamic semanticsDebuggerPainter = customPaint.foregroundPainter;
   expect(semanticsDebuggerPainter.runtimeType.toString(), '_SemanticsDebuggerPainter');
-  return semanticsDebuggerPainter.getMessage(tester.renderObject(find.byKey(widgetKey)).debugSemantics);
+  return semanticsDebuggerPainter;
 }

@@ -1,6 +1,8 @@
-// Copyright 2019 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -25,10 +27,10 @@ void main() {
                   width: 100,
                   height: 150,
                   color: Colors.red,
-                )
+                ),
             ),
           ),
-        )
+        ),
     );
 
     // Move just below kTouchSlop should recognize tap.
@@ -69,10 +71,10 @@ void main() {
                   width: 500,
                   height: 500,
                   color: Colors.red,
-                )
+                ),
             ),
           ),
-        )
+        ),
     );
 
     // Move just below kTouchSlop should recognize tap.

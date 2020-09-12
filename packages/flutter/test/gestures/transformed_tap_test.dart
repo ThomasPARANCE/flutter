@@ -1,6 +1,8 @@
-// Copyright 2019 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -8,7 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/gestures.dart';
 
 void main() {
-  testWidgets('gets local corrdinates', (WidgetTester tester) async {
+  testWidgets('gets local coordinates', (WidgetTester tester) async {
     int tapCount = 0;
     int tapCancelCount = 0;
     final List<TapDownDetails> downDetails = <TapDownDetails>[];
@@ -35,9 +37,9 @@ void main() {
             width: 100,
             height: 150,
             color: Colors.red,
-          )
+          ),
         ),
-      )
+      ),
     );
 
     await tester.tapAt(tester.getCenter(find.byKey(redContainer)));
@@ -78,10 +80,10 @@ void main() {
                   width: 100,
                   height: 150,
                   color: Colors.red,
-                )
+                ),
             ),
           ),
-        )
+        ),
     );
 
     // Move just below kTouchSlop should recognize tap.
@@ -141,10 +143,10 @@ void main() {
                   width: 100,
                   height: 150,
                   color: Colors.red,
-                )
+                ),
             ),
           ),
-        )
+        ),
     );
 
     // Move just below kTouchSlop should recognize tap.

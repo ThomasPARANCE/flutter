@@ -1,4 +1,4 @@
-// Copyright 2015 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -57,7 +57,7 @@ class TestPointer {
   /// Set when the object is constructed. Defaults to 1.
   final int pointer;
 
-  /// The kind of pointer device to simulate. Defaults to
+  /// The kind of pointing device to simulate. Defaults to
   /// [PointerDeviceKind.touch].
   final PointerDeviceKind kind;
 
@@ -341,10 +341,10 @@ class TestGesture {
 
   /// Dispatch a pointer down event at the given `downLocation`, caching the
   /// hit test result.
-  Future<void> down(Offset downLocation) async {
+  Future<void> down(Offset downLocation, { Duration timeStamp = Duration.zero }) async {
     return TestAsyncUtils.guard<void>(() async {
       _result = _hitTester(downLocation);
-      return _dispatcher(_pointer.down(downLocation), _result);
+      return _dispatcher(_pointer.down(downLocation, timeStamp: timeStamp), _result);
     });
   }
 
@@ -373,16 +373,16 @@ class TestGesture {
   }
 
   /// In a test, send a pointer add event for this pointer.
-  Future<void> addPointer({ Duration timeStamp = Duration.zero }) {
+  Future<void> addPointer({ Duration timeStamp = Duration.zero, Offset location }) {
     return TestAsyncUtils.guard<void>(() {
-      return _dispatcher(_pointer.addPointer(timeStamp: timeStamp, location: _pointer.location), null);
+      return _dispatcher(_pointer.addPointer(timeStamp: timeStamp, location: location ?? _pointer.location), null);
     });
   }
 
   /// In a test, send a pointer remove event for this pointer.
-  Future<void> removePointer({ Duration timeStamp = Duration.zero}) {
+  Future<void> removePointer({ Duration timeStamp = Duration.zero, Offset location }) {
     return TestAsyncUtils.guard<void>(() {
-      return _dispatcher(_pointer.removePointer(timeStamp: timeStamp, location: _pointer.location), null);
+      return _dispatcher(_pointer.removePointer(timeStamp: timeStamp, location: location ?? _pointer.location), null);
     });
   }
 
@@ -416,10 +416,10 @@ class TestGesture {
   }
 
   /// End the gesture by releasing the pointer.
-  Future<void> up() {
+  Future<void> up({ Duration timeStamp = Duration.zero }) {
     return TestAsyncUtils.guard<void>(() async {
       assert(_pointer._isDown);
-      await _dispatcher(_pointer.up(), _result);
+      await _dispatcher(_pointer.up(timeStamp: timeStamp), _result);
       assert(!_pointer._isDown);
       _result = null;
     });
@@ -428,10 +428,10 @@ class TestGesture {
   /// End the gesture by canceling the pointer (as would happen if the
   /// system showed a modal dialog on top of the Flutter application,
   /// for instance).
-  Future<void> cancel() {
+  Future<void> cancel({ Duration timeStamp = Duration.zero }) {
     return TestAsyncUtils.guard<void>(() async {
       assert(_pointer._isDown);
-      await _dispatcher(_pointer.cancel(), _result);
+      await _dispatcher(_pointer.cancel(timeStamp: timeStamp), _result);
       assert(!_pointer._isDown);
       _result = null;
     });

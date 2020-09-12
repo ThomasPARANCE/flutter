@@ -1,6 +1,8 @@
-// Copyright 2019 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'dart:math' as math;
 
@@ -11,7 +13,7 @@ import 'package:flutter/gestures.dart';
 
 void main() {
   group('Horizontal', () {
-    testWidgets('gets local corrdinates', (WidgetTester tester) async {
+    testWidgets('gets local coordinates', (WidgetTester tester) async {
       int dragCancelCount = 0;
       final List<DragDownDetails> downDetails = <DragDownDetails>[];
       final List<DragEndDetails> endDetails = <DragEndDetails>[];
@@ -262,7 +264,7 @@ void main() {
       updateDetails.clear();
     });
 
-    testWidgets('kTouchSlop is evaluated in the global coordinate space when roateted 45 degrees', (WidgetTester tester) async {
+    testWidgets('kTouchSlop is evaluated in the global coordinate space when rotated 45 degrees', (WidgetTester tester) async {
       int dragCancelCount = 0;
       final List<DragDownDetails> downDetails = <DragDownDetails>[];
       final List<DragEndDetails> endDetails = <DragEndDetails>[];
@@ -334,12 +336,12 @@ void main() {
       expect(startDetails, hasLength(1));
       expect(updateDetails.single.globalPosition, within(distance: 0.0001, from: const Offset(400 + kTouchSlop + 3, 300 + kTouchSlop + 4)));
       expect(updateDetails.single.delta, within(distance: 0.1, from: const Offset(5, 0.0))); // sqrt(3^2 + 4^2)
-      expect(updateDetails.single.primaryDelta, within(distance: 0.1, from: 5.0)); // sqrt(3^2 + 4^2)
+      expect(updateDetails.single.primaryDelta, within<double>(distance: 0.1, from: 5.0)); // sqrt(3^2 + 4^2)
     });
   });
 
   group('Vertical', () {
-    testWidgets('gets local corrdinates', (WidgetTester tester) async {
+    testWidgets('gets local coordinates', (WidgetTester tester) async {
       int dragCancelCount = 0;
       final List<DragDownDetails> downDetails = <DragDownDetails>[];
       final List<DragEndDetails> endDetails = <DragEndDetails>[];
@@ -590,7 +592,7 @@ void main() {
       updateDetails.clear();
     });
 
-    testWidgets('kTouchSlop is evaluated in the global coordinate space when roateted 45 degrees', (WidgetTester tester) async {
+    testWidgets('kTouchSlop is evaluated in the global coordinate space when rotated 45 degrees', (WidgetTester tester) async {
       int dragCancelCount = 0;
       final List<DragDownDetails> downDetails = <DragDownDetails>[];
       final List<DragEndDetails> endDetails = <DragEndDetails>[];
@@ -662,7 +664,7 @@ void main() {
       expect(startDetails, hasLength(1));
       expect(updateDetails.single.globalPosition, within(distance: 0.0001, from: const Offset(400 + kTouchSlop - 4, 300 + kTouchSlop + 3)));
       expect(updateDetails.single.delta, within(distance: 0.1, from: const Offset(0.0, 5.0))); // sqrt(3^2 + 4^2)
-      expect(updateDetails.single.primaryDelta, within(distance: 0.1, from: 5.0)); // sqrt(3^2 + 4^2)
+      expect(updateDetails.single.primaryDelta, within<double>(distance: 0.1, from: 5.0)); // sqrt(3^2 + 4^2)
     });
   });
 }

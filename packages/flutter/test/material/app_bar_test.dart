@@ -1,7 +1,10 @@
-// Copyright 2016 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// @dart = 2.8
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -9,7 +12,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../widgets/semantics_tester.dart';
 
-Widget buildSliverAppBarApp({ bool floating, bool pinned, double expandedHeight, bool snap = false }) {
+Widget buildSliverAppBarApp({
+  bool floating,
+  bool pinned,
+  double collapsedHeight,
+  double expandedHeight,
+  bool snap = false,
+  double toolbarHeight = kToolbarHeight,
+}) {
   return Localizations(
     locale: const Locale('en', 'US'),
     delegates: const <LocalizationsDelegate<dynamic>>[
@@ -30,7 +40,9 @@ Widget buildSliverAppBarApp({ bool floating, bool pinned, double expandedHeight,
                   title: const Text('AppBar Title'),
                   floating: floating,
                   pinned: pinned,
+                  collapsedHeight: collapsedHeight,
                   expandedHeight: expandedHeight,
+                  toolbarHeight: toolbarHeight,
                   snap: snap,
                   bottom: TabBar(
                     tabs: <String>['A','B','C'].map<Widget>((String t) => Tab(text: 'TAB $t')).toList(),
@@ -83,66 +95,68 @@ void main() {
     Size size = tester.getSize(title);
     expect(center.dx, lessThan(400 - size.width / 2.0));
 
-    // Clear the widget tree to avoid animating between Android and iOS.
-    await tester.pumpWidget(Container(key: UniqueKey()));
+    for (final TargetPlatform platform in <TargetPlatform>[TargetPlatform.iOS, TargetPlatform.macOS]) {
+      // Clear the widget tree to avoid animating between platforms.
+      await tester.pumpWidget(Container(key: UniqueKey()));
 
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: ThemeData(platform: TargetPlatform.iOS),
-        home: Scaffold(
-          appBar: AppBar(
-            title: const Text('X'),
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(platform: platform),
+          home: Scaffold(
+            appBar: AppBar(
+              title: const Text('X'),
+            ),
           ),
         ),
-      ),
-    );
+      );
 
-    center = tester.getCenter(title);
-    size = tester.getSize(title);
-    expect(center.dx, greaterThan(400 - size.width / 2.0));
-    expect(center.dx, lessThan(400 + size.width / 2.0));
+      center = tester.getCenter(title);
+      size = tester.getSize(title);
+      expect(center.dx, greaterThan(400 - size.width / 2.0), reason: 'on ${describeEnum(platform)}');
+      expect(center.dx, lessThan(400 + size.width / 2.0), reason: 'on ${describeEnum(platform)}');
 
-    // One action is still centered.
+      // One action is still centered.
 
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: ThemeData(platform: TargetPlatform.iOS),
-        home: Scaffold(
-          appBar: AppBar(
-            title: const Text('X'),
-            actions: const <Widget>[
-              Icon(Icons.thumb_up),
-            ],
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(platform: platform),
+          home: Scaffold(
+            appBar: AppBar(
+              title: const Text('X'),
+              actions: const <Widget>[
+                Icon(Icons.thumb_up),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
 
-    center = tester.getCenter(title);
-    size = tester.getSize(title);
-    expect(center.dx, greaterThan(400 - size.width / 2.0));
-    expect(center.dx, lessThan(400 + size.width / 2.0));
+      center = tester.getCenter(title);
+      size = tester.getSize(title);
+      expect(center.dx, greaterThan(400 - size.width / 2.0), reason: 'on ${describeEnum(platform)}');
+      expect(center.dx, lessThan(400 + size.width / 2.0), reason: 'on ${describeEnum(platform)}');
 
-    // Two actions is left aligned again.
+      // Two actions is left aligned again.
 
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: ThemeData(platform: TargetPlatform.iOS),
-        home: Scaffold(
-          appBar: AppBar(
-            title: const Text('X'),
-            actions: const <Widget>[
-              Icon(Icons.thumb_up),
-              Icon(Icons.thumb_up),
-            ],
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(platform: platform),
+          home: Scaffold(
+            appBar: AppBar(
+              title: const Text('X'),
+              actions: const <Widget>[
+                Icon(Icons.thumb_up),
+                Icon(Icons.thumb_up),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
 
-    center = tester.getCenter(title);
-    size = tester.getSize(title);
-    expect(center.dx, lessThan(400 - size.width / 2.0));
+      center = tester.getCenter(title);
+      size = tester.getSize(title);
+      expect(center.dx, lessThan(400 - size.width / 2.0), reason: 'on ${describeEnum(platform)}');
+    }
   });
 
   testWidgets('AppBar centerTitle:true centers on Android', (WidgetTester tester) async {
@@ -155,7 +169,7 @@ void main() {
             title: const Text('X'),
           ),
         ),
-      )
+      ),
     );
 
     final Finder title = find.text('X');
@@ -366,7 +380,7 @@ void main() {
 
     // Centering a title with width 700 within the 800 pixel wide test widget
     // would mean that its start edge would have to be 50. The material spec says
-    // that the start edge of the title must be atleast 72.
+    // that the start edge of the title must be at least 72.
     await tester.pumpWidget(buildApp());
 
     final Finder title = find.byKey(titleKey);
@@ -421,7 +435,7 @@ void main() {
 
     // Centering a title with width 700 within the 800 pixel wide test widget
     // would mean that its start edge would have to be 50. The material spec says
-    // that the start edge of the title must be atleast 72.
+    // that the start edge of the title must be at least 72.
     await tester.pumpWidget(buildApp());
 
     final Finder title = find.byKey(titleKey);
@@ -777,7 +791,7 @@ void main() {
     expect(appBarHeight(tester), kTextTabBarHeight);
 
     // Drag the scrollable up and down. The app bar should not snap open, the
-    // bottof of the appbar should just track the drag offset.
+    // bottom of the appbar should just track the drag offset.
     TestGesture gesture = await tester.startGesture(const Offset(50.0, 200.0));
     await gesture.moveBy(const Offset(0.0, 100.0));
     await tester.pump();
@@ -839,6 +853,71 @@ void main() {
     await tester.pumpAndSettle();
     expect(appBarTop(tester), lessThanOrEqualTo(0.0));
     expect(appBarBottom(tester), kTextTabBarHeight);
+  });
+
+  testWidgets('SliverAppBar expandedHeight, collapsedHeight', (WidgetTester tester) async {
+    const double expandedAppBarHeight = 400.0;
+    const double collapsedAppBarHeight = 200.0;
+
+    await tester.pumpWidget(buildSliverAppBarApp(
+      floating: false,
+      pinned: false,
+      collapsedHeight: collapsedAppBarHeight,
+      expandedHeight: expandedAppBarHeight,
+    ));
+
+    final ScrollController controller = primaryScrollController(tester);
+    expect(controller.offset, 0.0);
+    expect(find.byType(SliverAppBar), findsOneWidget);
+    expect(appBarHeight(tester), expandedAppBarHeight);
+
+    final double initialTabBarHeight = tabBarHeight(tester);
+
+    // Scroll the not-pinned appbar partially out of view.
+    controller.jumpTo(50.0);
+    await tester.pump();
+    expect(find.byType(SliverAppBar), findsOneWidget);
+    expect(appBarHeight(tester), expandedAppBarHeight - 50.0);
+    expect(tabBarHeight(tester), initialTabBarHeight);
+
+    // Scroll the not-pinned appbar out of view, to its collapsed height.
+    controller.jumpTo(600.0);
+    await tester.pump();
+    expect(find.byType(SliverAppBar), findsNothing);
+    expect(appBarHeight(tester), collapsedAppBarHeight + initialTabBarHeight);
+    expect(tabBarHeight(tester), initialTabBarHeight);
+
+    // Scroll the not-pinned appbar back into view.
+    controller.jumpTo(0.0);
+    await tester.pump();
+    expect(find.byType(SliverAppBar), findsOneWidget);
+    expect(appBarHeight(tester), expandedAppBarHeight);
+    expect(tabBarHeight(tester), initialTabBarHeight);
+  });
+
+  testWidgets('SliverAppBar rebuilds when forceElevated changes', (WidgetTester tester) async {
+    // Regression test for https://github.com/flutter/flutter/issues/59158.
+    Widget buildSliverAppBar(bool forceElevated) {
+      return MaterialApp(
+        home: CustomScrollView(
+          slivers: <Widget>[
+            SliverAppBar(
+              title: const Text('Title'),
+              forceElevated: forceElevated,
+            ),
+          ],
+        ),
+      );
+    }
+
+    final Finder appBarFinder = find.byType(AppBar);
+    AppBar getAppBarWidget(Finder finder) => tester.widget<AppBar>(finder);
+
+    await tester.pumpWidget(buildSliverAppBar(false));
+    expect(getAppBarWidget(appBarFinder).elevation, 0.0);
+
+    await tester.pumpWidget(buildSliverAppBar(true));
+    expect(getAppBarWidget(appBarFinder).elevation, 4.0);
   });
 
   testWidgets('AppBar dimensions, with and without bottom, primary', (WidgetTester tester) async {
@@ -960,6 +1039,36 @@ void main() {
     );
     expect(appBarTop(tester), 0.0);
     expect(tester.getTopLeft(find.text('title')).dy, lessThan(100.0));
+  });
+
+  testWidgets('AppBar in body excludes bottom SafeArea padding', (WidgetTester tester) async {
+    // Regression test for https://github.com/flutter/flutter/issues/26163
+    await tester.pumpWidget(
+      Localizations(
+        locale: const Locale('en', 'US'),
+        delegates: const <LocalizationsDelegate<dynamic>>[
+          DefaultMaterialLocalizations.delegate,
+          DefaultWidgetsLocalizations.delegate,
+        ],
+        child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: MediaQuery(
+          data: const MediaQueryData(padding: EdgeInsets.symmetric(vertical: 100.0)),
+          child: Scaffold(
+            primary: true,
+            body: Column(
+              children: <Widget>[
+                AppBar(
+                  title: const Text('title'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ));
+    expect(appBarTop(tester), 0.0);
+    expect(appBarHeight(tester), kToolbarHeight + 100.0);
   });
 
   testWidgets('AppBar updates when you add a drawer', (WidgetTester tester) async {
@@ -1119,7 +1228,7 @@ void main() {
   });
 
   testWidgets('AppBar positioning of leading and trailing widgets with top padding', (WidgetTester tester) async {
-    const MediaQueryData topPadding100 = MediaQueryData(padding: EdgeInsets.only(top: 100.0));
+    const MediaQueryData topPadding100 = MediaQueryData(padding: EdgeInsets.only(top: 100));
 
     final Key leadingKey = UniqueKey();
     final Key titleKey = UniqueKey();
@@ -1139,18 +1248,26 @@ void main() {
           child: Scaffold(
             primary: false,
             appBar: AppBar(
-              leading: Placeholder(key: leadingKey),
-              title: Placeholder(key: titleKey),
-              actions: <Widget>[ Placeholder(key: trailingKey) ],
+              leading: Placeholder(key: leadingKey), // Forced to 56x56, see _kLeadingWidth in app_bar.dart.
+              title: Placeholder(key: titleKey, fallbackHeight: kToolbarHeight),
+              actions: <Widget>[ Placeholder(key: trailingKey, fallbackWidth: 10) ],
             ),
           ),
         ),
       ),
     ));
-    expect(tester.getTopLeft(find.byType(AppBar)), const Offset(0.0, 0.0));
-    expect(tester.getTopLeft(find.byKey(leadingKey)), const Offset(800.0 - 56.0, 100.0));
-    expect(tester.getTopLeft(find.byKey(titleKey)), const Offset(416.0, 100.0));
-    expect(tester.getTopLeft(find.byKey(trailingKey)), const Offset(0.0, 100.0));
+    expect(tester.getTopLeft(find.byType(AppBar)), const Offset(0, 0));
+    expect(tester.getTopLeft(find.byKey(leadingKey)), const Offset(800.0 - 56.0, 100));
+    expect(tester.getTopLeft(find.byKey(trailingKey)), const Offset(0.0, 100));
+
+    // Because the topPadding eliminates the vertical space for the
+    // NavigationToolbar within the AppBar, the toolbar is constrained
+    // with minHeight=maxHeight=0. The _AppBarTitle widget vertically centers
+    // the title, so its Y coordinate relative to the toolbar is -kToolbarHeight / 2
+    // (-28). The top of the toolbar is at (screen coordinates) y=100, so the
+    // top of the title is 100 + -28 = 72. The toolbar clips its contents
+    // so the title isn't actually visible.
+    expect(tester.getTopLeft(find.byKey(titleKey)), const Offset(10 + NavigationToolbar.kMiddleSpacing, 72));
   });
 
   testWidgets('SliverAppBar positioning of leading and trailing widgets with top padding', (WidgetTester tester) async {
@@ -1176,7 +1293,7 @@ void main() {
             slivers: <Widget>[
               SliverAppBar(
                 leading: Placeholder(key: leadingKey),
-                title: Placeholder(key: titleKey),
+                title: Placeholder(key: titleKey, fallbackHeight: kToolbarHeight),
                 actions: <Widget>[ Placeholder(key: trailingKey) ],
               ),
             ],
@@ -1255,37 +1372,41 @@ void main() {
           TestSemantics(
             children: <TestSemantics>[
               TestSemantics(
-                flags: <SemanticsFlag>[SemanticsFlag.scopesRoute],
-                children: <TestSemantics>[
+                children: <TestSemantics> [
                   TestSemantics(
+                    flags: <SemanticsFlag>[SemanticsFlag.scopesRoute],
                     children: <TestSemantics>[
                       TestSemantics(
-                        label: 'Leading',
-                        textDirection: TextDirection.ltr,
-                      ),
-                      TestSemantics(
-                        flags: <SemanticsFlag>[
-                          SemanticsFlag.namesRoute,
-                          SemanticsFlag.isHeader,
+                        children: <TestSemantics>[
+                          TestSemantics(
+                            label: 'Leading',
+                            textDirection: TextDirection.ltr,
+                          ),
+                          TestSemantics(
+                            flags: <SemanticsFlag>[
+                              SemanticsFlag.namesRoute,
+                              SemanticsFlag.isHeader,
+                            ],
+                            label: 'Title',
+                            textDirection: TextDirection.ltr,
+                          ),
+                          TestSemantics(
+                            label: 'Action 1',
+                            textDirection: TextDirection.ltr,
+                          ),
+                          TestSemantics(
+                            label: 'Action 2',
+                            textDirection: TextDirection.ltr,
+                          ),
+                          TestSemantics(
+                            label: 'Action 3',
+                            textDirection: TextDirection.ltr,
+                          ),
+                          TestSemantics(
+                            label: 'Bottom',
+                            textDirection: TextDirection.ltr,
+                          ),
                         ],
-                        label: 'Title',
-                        textDirection: TextDirection.ltr,
-                      ),
-                      TestSemantics(
-                        label: 'Action 1',
-                        textDirection: TextDirection.ltr,
-                      ),
-                      TestSemantics(
-                        label: 'Action 2',
-                        textDirection: TextDirection.ltr,
-                      ),
-                      TestSemantics(
-                        label: 'Action 3',
-                        textDirection: TextDirection.ltr,
-                      ),
-                      TestSemantics(
-                        label: 'Bottom',
-                        textDirection: TextDirection.ltr,
                       ),
                     ],
                   ),
@@ -1338,40 +1459,166 @@ void main() {
           TestSemantics(
             children: <TestSemantics>[
               TestSemantics(
-                flags: <SemanticsFlag>[SemanticsFlag.scopesRoute],
                 children: <TestSemantics>[
                   TestSemantics(
-                    textDirection: TextDirection.rtl,
+                    flags: <SemanticsFlag>[SemanticsFlag.scopesRoute],
+                    children: <TestSemantics>[
+                      TestSemantics(
+                        textDirection: TextDirection.rtl,
+                        children: <TestSemantics>[
+                          TestSemantics(
+                            children: <TestSemantics>[
+                              TestSemantics(
+                                label: 'Leading',
+                                textDirection: TextDirection.rtl,
+                              ),
+                              TestSemantics(
+                                flags: <SemanticsFlag>[
+                                  SemanticsFlag.namesRoute,
+                                  SemanticsFlag.isHeader,
+                                ],
+                                label: 'Title',
+                                textDirection: TextDirection.rtl,
+                              ),
+                              TestSemantics(
+                                label: 'Action 1',
+                                textDirection: TextDirection.rtl,
+                              ),
+                              TestSemantics(
+                                label: 'Action 2',
+                                textDirection: TextDirection.rtl,
+                              ),
+                              TestSemantics(
+                                label: 'Action 3',
+                                textDirection: TextDirection.rtl,
+                              ),
+                              TestSemantics(
+                                label: 'Bottom',
+                                textDirection: TextDirection.rtl,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+      ignoreRect: true,
+      ignoreTransform: true,
+      ignoreId: true,
+    ));
+
+    semantics.dispose();
+  });
+
+  testWidgets('AppBar excludes header semantics correctly', (WidgetTester tester) async {
+    final SemanticsTester semantics = SemanticsTester(tester);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Center(
+          child: AppBar(
+            leading: const Text('Leading'),
+            title: const ExcludeSemantics(child: Text('Title')),
+            excludeHeaderSemantics: true,
+            actions: const <Widget>[
+              Text('Action 1'),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    expect(semantics, hasSemantics(
+      TestSemantics.root(
+        children: <TestSemantics>[
+          TestSemantics(
+            children: <TestSemantics>[
+              TestSemantics(
+                children: <TestSemantics>[
+                  TestSemantics(
+                    flags: <SemanticsFlag>[SemanticsFlag.scopesRoute],
                     children: <TestSemantics>[
                       TestSemantics(
                         children: <TestSemantics>[
                           TestSemantics(
                             label: 'Leading',
-                            textDirection: TextDirection.rtl,
-                          ),
-                          TestSemantics(
-                            flags: <SemanticsFlag>[
-                              SemanticsFlag.namesRoute,
-                              SemanticsFlag.isHeader,
-                            ],
-                            label: 'Title',
-                            textDirection: TextDirection.rtl,
+                            textDirection: TextDirection.ltr,
                           ),
                           TestSemantics(
                             label: 'Action 1',
-                            textDirection: TextDirection.rtl,
+                            textDirection: TextDirection.ltr,
                           ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+      ignoreRect: true,
+      ignoreTransform: true,
+      ignoreId: true,
+    ));
+
+    semantics.dispose();
+  });
+
+  testWidgets('SliverAppBar excludes header semantics correctly', (WidgetTester tester) async {
+    final SemanticsTester semantics = SemanticsTester(tester);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: CustomScrollView(
+          slivers: <Widget>[
+            SliverAppBar(
+              leading: Text('Leading'),
+              flexibleSpace: ExcludeSemantics(child: Text('Title')),
+              actions: <Widget>[Text('Action 1')],
+              excludeHeaderSemantics: true,
+            ),
+          ],
+        ),
+      ),
+    );
+
+    expect(semantics, hasSemantics(
+      TestSemantics.root(
+        children: <TestSemantics>[
+          TestSemantics(
+            textDirection: TextDirection.ltr,
+            children: <TestSemantics>[
+              TestSemantics(
+                children: <TestSemantics>[
+                  TestSemantics(
+                    flags: <SemanticsFlag>[SemanticsFlag.scopesRoute],
+                    children: <TestSemantics>[
+                      TestSemantics(
+                        children: <TestSemantics>[
                           TestSemantics(
-                            label: 'Action 2',
-                            textDirection: TextDirection.rtl,
-                          ),
-                          TestSemantics(
-                            label: 'Action 3',
-                            textDirection: TextDirection.rtl,
-                          ),
-                          TestSemantics(
-                            label: 'Bottom',
-                            textDirection: TextDirection.rtl,
+                            flags: <SemanticsFlag>[SemanticsFlag.hasImplicitScrolling],
+                            children: <TestSemantics>[
+                              TestSemantics(
+                                children: <TestSemantics>[
+                                  TestSemantics(
+                                    label: 'Leading',
+                                    textDirection: TextDirection.ltr,
+                                  ),
+                                  TestSemantics(
+                                    label: 'Action 1',
+                                    textDirection: TextDirection.ltr,
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -1579,5 +1826,180 @@ void main() {
     final Finder materialFinder = find.byType(Material);
     Material getMaterialWidget(Finder finder) => tester.widget<Material>(finder);
     expect(getMaterialWidget(materialFinder).shape, roundedRectangleBorder);
+  });
+
+  testWidgets('AppBars title has upper limit on text scaling, textScaleFactor = 1, 1.34, 2', (WidgetTester tester) async {
+    double textScaleFactor;
+
+    Widget buildFrame() {
+      return MaterialApp(
+        home: Builder(
+          builder: (BuildContext context) {
+            return MediaQuery(
+              data: MediaQuery.of(context).copyWith(textScaleFactor: textScaleFactor),
+              child: Scaffold(
+                appBar: AppBar(
+                  centerTitle: false,
+                  title: const Text('Jumbo', style: TextStyle(fontSize: 18)),
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    final Finder appBarTitle = find.text('Jumbo');
+
+    textScaleFactor = 1;
+    await tester.pumpWidget(buildFrame());
+    expect(tester.getRect(appBarTitle).height, 18);
+
+    textScaleFactor = 1.34;
+    await tester.pumpWidget(buildFrame());
+    expect(tester.getRect(appBarTitle).height, 24);
+
+    textScaleFactor = 2;
+    await tester.pumpWidget(buildFrame());
+    expect(tester.getRect(appBarTitle).height, 24);
+  });
+
+  testWidgets('AppBars with jumbo titles, textScaleFactor = 3, 3.5, 4', (WidgetTester tester) async {
+    double textScaleFactor;
+    TextDirection textDirection;
+    bool centerTitle;
+
+    Widget buildFrame() {
+      return MaterialApp(
+        home: Builder(
+          builder: (BuildContext context) {
+            return Directionality(
+              textDirection: textDirection,
+              child: Builder(
+                builder: (BuildContext context) {
+                  return Scaffold(
+                    appBar: AppBar(
+                      centerTitle: centerTitle,
+                      title: MediaQuery(
+                        data: MediaQuery.of(context).copyWith(textScaleFactor: textScaleFactor),
+                        child: const Text('Jumbo'),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    final Finder appBarTitle = find.text('Jumbo');
+    final Finder toolbar = find.byType(NavigationToolbar);
+
+    // Overall screen size is 800x600
+    // Left or right justified title is padded by 16 on the "start" side.
+    // Toolbar height is 56.
+
+    textScaleFactor = 1; // "Jumbo" title is 100x20.
+    textDirection = TextDirection.ltr;
+    centerTitle = false;
+    await tester.pumpWidget(buildFrame());
+    expect(tester.getRect(appBarTitle), const Rect.fromLTRB(16, 18, 116, 38));
+    expect(tester.getCenter(appBarTitle).dy, tester.getCenter(toolbar).dy);
+
+    textScaleFactor = 3; // "Jumbo" title is 300x60.
+    await tester.pumpWidget(buildFrame());
+    expect(tester.getRect(appBarTitle), const Rect.fromLTRB(16, -2, 316, 58));
+    expect(tester.getCenter(appBarTitle).dy, tester.getCenter(toolbar).dy);
+
+    textScaleFactor = 3.5; // "Jumbo" title is 350x70.
+    await tester.pumpWidget(buildFrame());
+    expect(tester.getRect(appBarTitle), const Rect.fromLTRB(16, -7, 366, 63));
+    expect(tester.getCenter(appBarTitle).dy, tester.getCenter(toolbar).dy);
+
+    textScaleFactor = 4; // "Jumbo" title is 400x80.
+    await tester.pumpWidget(buildFrame());
+    expect(tester.getRect(appBarTitle), const Rect.fromLTRB(16, -12, 416, 68));
+    expect(tester.getCenter(appBarTitle).dy, tester.getCenter(toolbar).dy);
+
+    textDirection = TextDirection.rtl; // Changed to rtl. "Jumbo" title is still 400x80.
+    await tester.pumpWidget(buildFrame());
+    expect(tester.getRect(appBarTitle), const Rect.fromLTRB(800.0 - 400.0 - 16.0, -12, 800.0 - 16.0, 68));
+    expect(tester.getCenter(appBarTitle).dy, tester.getCenter(toolbar).dy);
+
+    centerTitle = true; // Changed to true. "Jumbo" title is still 400x80.
+    await tester.pumpWidget(buildFrame());
+    expect(tester.getRect(appBarTitle), const Rect.fromLTRB(200, -12, 800.0 - 200.0, 68));
+    expect(tester.getCenter(appBarTitle).dy, tester.getCenter(toolbar).dy);
+  });
+
+  testWidgets('AppBar respects toolbarHeight', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          appBar: AppBar(
+            title: const Text('Title'),
+            toolbarHeight: 48,
+          ),
+          body: Container(),
+        ),
+      )
+    );
+
+    expect(appBarHeight(tester), 48);
+  });
+
+  testWidgets('SliverAppBar default collapsedHeight with respect to toolbarHeight', (WidgetTester tester) async {
+    const double toolbarHeight = 100.0;
+
+    await tester.pumpWidget(buildSliverAppBarApp(
+      floating: false,
+      pinned: false,
+      toolbarHeight: toolbarHeight,
+    ));
+
+    final ScrollController controller = primaryScrollController(tester);
+    final double initialTabBarHeight = tabBarHeight(tester);
+
+    // Scroll the not-pinned appbar out of view, to its collapsed height.
+    controller.jumpTo(300.0);
+    await tester.pump();
+    expect(find.byType(SliverAppBar), findsNothing);
+    // By default, the collapsedHeight is toolbarHeight + bottom.preferredSize.height,
+    // in this case initialTabBarHeight.
+    expect(appBarHeight(tester), toolbarHeight + initialTabBarHeight);
+  });
+
+  testWidgets('SliverAppBar collapsedHeight with toolbarHeight', (WidgetTester tester) async {
+    const double toolbarHeight = 100.0;
+    const double collapsedHeight = 150.0;
+
+    await tester.pumpWidget(buildSliverAppBarApp(
+      floating: false,
+      pinned: false,
+      toolbarHeight: toolbarHeight,
+      collapsedHeight: collapsedHeight
+    ));
+
+    final ScrollController controller = primaryScrollController(tester);
+    final double initialTabBarHeight = tabBarHeight(tester);
+
+    // Scroll the not-pinned appbar out of view, to its collapsed height.
+    controller.jumpTo(300.0);
+    await tester.pump();
+    expect(find.byType(SliverAppBar), findsNothing);
+    expect(appBarHeight(tester), collapsedHeight + initialTabBarHeight);
+  });
+
+  test('SliverApp toolbarHeight cannot be null', () {
+    try{
+       SliverAppBar(
+        toolbarHeight: null,
+      );
+    } on AssertionError catch (error) {
+      expect(error.toString(), contains('toolbarHeight != null'));
+      expect(error.toString(), contains('is not true'));
+    }
   });
 }

@@ -1,6 +1,8 @@
-// Copyright 2018 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/widgets.dart';
@@ -61,7 +63,69 @@ void main() {
 
     final DefaultTextStyle widget = tester.widget(find.widgetWithText(DefaultTextStyle, 'Ok'));
 
-    expect(widget.style.color, CupertinoColors.destructiveRed);
+    expect(widget.style.color, const CupertinoDynamicColor.withBrightnessAndContrast(
+      color: Color.fromARGB(255, 255, 59, 48),
+      darkColor: Color.fromARGB(255, 255, 69, 58),
+      highContrastColor: Color.fromARGB(255, 215, 0, 21),
+      darkHighContrastColor: Color.fromARGB(255, 255, 105, 97),
+    ));
+  });
+
+  testWidgets('Action sheet dark mode', (WidgetTester tester) async {
+    final Widget action = CupertinoActionSheetAction(
+      child: const Text('action'),
+      onPressed: () {},
+    );
+
+    Brightness brightness = Brightness.light;
+    StateSetter stateSetter;
+
+    TextStyle actionTextStyle(String text) {
+      return tester.widget<DefaultTextStyle>(
+        find.descendant(
+          of: find.widgetWithText(CupertinoActionSheetAction, text),
+          matching: find.byType(DefaultTextStyle),
+        ),
+      ).style;
+    }
+
+    await tester.pumpWidget(
+      createAppWithButtonThatLaunchesActionSheet(
+        StatefulBuilder(
+          builder: (BuildContext context, StateSetter setter) {
+            stateSetter = setter;
+            return CupertinoTheme(
+              data: CupertinoThemeData(
+                brightness: brightness,
+                primaryColor: const CupertinoDynamicColor.withBrightnessAndContrast(
+                  color: Color.fromARGB(255, 0, 122, 255),
+                  darkColor: Color.fromARGB(255, 10, 132, 255),
+                  highContrastColor: Color.fromARGB(255, 0, 64, 221),
+                  darkHighContrastColor: Color.fromARGB(255, 64, 156, 255),
+                ),
+              ),
+              child: CupertinoActionSheet(actions: <Widget>[action]),
+            );
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Go'));
+    await tester.pump();
+
+    expect(
+      actionTextStyle('action').color.value,
+      const Color.fromARGB(255, 0, 122, 255).value,
+    );
+
+    stateSetter(() { brightness = Brightness.dark; });
+    await tester.pump();
+
+    expect(
+      actionTextStyle('action').color.value,
+      const Color.fromARGB(255, 10, 132, 255).value,
+    );
   });
 
   testWidgets('Action sheet default text style', (WidgetTester tester) async {
@@ -251,7 +315,7 @@ void main() {
             ),
           );
         }),
-      )
+      ),
     );
 
     await tester.tap(find.text('Go'));
@@ -859,30 +923,52 @@ void main() {
             TestSemantics(
               children: <TestSemantics>[
                 TestSemantics(
-                  flags: <SemanticsFlag>[
-                    SemanticsFlag.scopesRoute,
-                    SemanticsFlag.namesRoute,
-                  ],
-                  label: 'Alert',
                   children: <TestSemantics>[
                     TestSemantics(
                       flags: <SemanticsFlag>[
-                        SemanticsFlag.hasImplicitScrolling,
+                        SemanticsFlag.scopesRoute,
+                        SemanticsFlag.namesRoute,
                       ],
+                      label: 'Alert',
                       children: <TestSemantics>[
                         TestSemantics(
-                          label: 'The title',
+                          flags: <SemanticsFlag>[
+                            SemanticsFlag.hasImplicitScrolling,
+                          ],
+                          children: <TestSemantics>[
+                            TestSemantics(
+                              label: 'The title',
+                            ),
+                            TestSemantics(
+                              label: 'The message',
+                            ),
+                          ],
                         ),
                         TestSemantics(
-                          label: 'The message',
+                          flags: <SemanticsFlag>[
+                            SemanticsFlag.hasImplicitScrolling,
+                          ],
+                          children: <TestSemantics>[
+                            TestSemantics(
+                              flags: <SemanticsFlag>[
+                                SemanticsFlag.isButton,
+                              ],
+                              actions: <SemanticsAction>[
+                                SemanticsAction.tap,
+                              ],
+                              label: 'One',
+                            ),
+                            TestSemantics(
+                              flags: <SemanticsFlag>[
+                                SemanticsFlag.isButton,
+                              ],
+                              actions: <SemanticsAction>[
+                                SemanticsAction.tap,
+                              ],
+                              label: 'Two',
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    TestSemantics(
-                      flags: <SemanticsFlag>[
-                        SemanticsFlag.hasImplicitScrolling,
-                      ],
-                      children: <TestSemantics>[
                         TestSemantics(
                           flags: <SemanticsFlag>[
                             SemanticsFlag.isButton,
@@ -890,29 +976,11 @@ void main() {
                           actions: <SemanticsAction>[
                             SemanticsAction.tap,
                           ],
-                          label: 'One',
-                        ),
-                        TestSemantics(
-                          flags: <SemanticsFlag>[
-                            SemanticsFlag.isButton,
-                          ],
-                          actions: <SemanticsAction>[
-                            SemanticsAction.tap,
-                          ],
-                          label: 'Two',
+                          label: 'Cancel',
                         ),
                       ],
                     ),
-                    TestSemantics(
-                      flags: <SemanticsFlag>[
-                        SemanticsFlag.isButton,
-                      ],
-                      actions: <SemanticsAction>[
-                        SemanticsAction.tap,
-                      ],
-                      label: 'Cancel',
-                    ),
-                  ],
+                  ]
                 ),
               ],
             ),
@@ -935,7 +1003,7 @@ RenderBox findScrollableActionsSectionRenderBox(WidgetTester tester) {
     }),
   );
   assert(actionsSection is RenderBox);
-  return actionsSection;
+  return actionsSection as RenderBox;
 }
 
 Widget createAppWithButtonThatLaunchesActionSheet(Widget actionSheet) {

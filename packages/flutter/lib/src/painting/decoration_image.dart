@@ -1,15 +1,20 @@
-// Copyright 2015 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// @dart = 2.8
+
+import 'dart:developer' as developer;
 import 'dart:ui' as ui show Image;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 
 import 'alignment.dart';
 import 'basic_types.dart';
 import 'borders.dart';
 import 'box_fit.dart';
+import 'debug.dart';
 import 'image_provider.dart';
 import 'image_stream.dart';
 
@@ -40,22 +45,28 @@ class DecorationImage {
   /// must not be null.
   const DecorationImage({
     @required this.image,
+    this.onError,
     this.colorFilter,
     this.fit,
     this.alignment = Alignment.center,
     this.centerSlice,
     this.repeat = ImageRepeat.noRepeat,
     this.matchTextDirection = false,
+    this.scale = 1.0
   }) : assert(image != null),
        assert(alignment != null),
        assert(repeat != null),
-       assert(matchTextDirection != null);
+       assert(matchTextDirection != null),
+       assert(scale != null);
 
   /// The image to be painted into the decoration.
   ///
   /// Typically this will be an [AssetImage] (for an image shipped with the
   /// application) or a [NetworkImage] (for an image obtained from the network).
   final ImageProvider image;
+
+  /// An optional error callback for errors emitted when loading [image].
+  final ImageErrorListener onError;
 
   /// A color filter to apply to the image before painting it.
   final ColorFilter colorFilter;
@@ -125,6 +136,12 @@ class DecorationImage {
   /// in the top right.
   final bool matchTextDirection;
 
+  /// Defines image pixels to be shown per logical pixels.
+  ///
+  /// By default the value of scale is 1.0. The scale for the image is
+  /// calculated by multiplying [scale] with `scale` of the given [ImageProvider].
+  final double scale;
+
   /// Creates a [DecorationImagePainter] for this [DecorationImage].
   ///
   /// The `onChanged` argument must not be null. It will be called whenever the
@@ -136,42 +153,45 @@ class DecorationImage {
   }
 
   @override
-  bool operator ==(dynamic other) {
+  bool operator ==(Object other) {
     if (identical(this, other))
       return true;
-    if (runtimeType != other.runtimeType)
+    if (other.runtimeType != runtimeType)
       return false;
-    final DecorationImage typedOther = other;
-    return image == typedOther.image
-        && colorFilter == typedOther.colorFilter
-        && fit == typedOther.fit
-        && alignment == typedOther.alignment
-        && centerSlice == typedOther.centerSlice
-        && repeat == typedOther.repeat
-        && matchTextDirection == typedOther.matchTextDirection;
+    return other is DecorationImage
+        && other.image == image
+        && other.colorFilter == colorFilter
+        && other.fit == fit
+        && other.alignment == alignment
+        && other.centerSlice == centerSlice
+        && other.repeat == repeat
+        && other.matchTextDirection == matchTextDirection
+        && other.scale == scale;
   }
 
   @override
-  int get hashCode => hashValues(image, colorFilter, fit, alignment, centerSlice, repeat, matchTextDirection);
+  int get hashCode => hashValues(image, colorFilter, fit, alignment, centerSlice, repeat, matchTextDirection, scale);
 
   @override
   String toString() {
-    final List<String> properties = <String>[];
-    properties.add('$image');
-    if (colorFilter != null)
-      properties.add('$colorFilter');
-    if (fit != null &&
-        !(fit == BoxFit.fill && centerSlice != null) &&
-        !(fit == BoxFit.scaleDown && centerSlice == null))
-      properties.add('$fit');
-    properties.add('$alignment');
-    if (centerSlice != null)
-      properties.add('centerSlice: $centerSlice');
-    if (repeat != ImageRepeat.noRepeat)
-      properties.add('$repeat');
-    if (matchTextDirection)
-      properties.add('match text direction');
-    return '$runtimeType(${properties.join(", ")})';
+    final List<String> properties = <String>[
+      '$image',
+      if (colorFilter != null)
+        '$colorFilter',
+      if (fit != null &&
+          !(fit == BoxFit.fill && centerSlice != null) &&
+          !(fit == BoxFit.scaleDown && centerSlice == null))
+        '$fit',
+      '$alignment',
+      if (centerSlice != null)
+        'centerSlice: $centerSlice',
+      if (repeat != ImageRepeat.noRepeat)
+        '$repeat',
+      if (matchTextDirection)
+        'match text direction',
+      'scale: $scale'
+    ];
+    return '${objectRuntimeType(this, 'DecorationImage')}(${properties.join(", ")})';
   }
 }
 
@@ -220,15 +240,15 @@ class DecorationImagePainter {
         // We check this first so that the assert will fire immediately, not just
         // when the image is ready.
         if (configuration.textDirection == null) {
-          throw FlutterError(
-            'ImageDecoration.matchTextDirection can only be used when a TextDirection is available.\n'
-            'When DecorationImagePainter.paint() was called, there was no text direction provided '
-            'in the ImageConfiguration object to match.\n'
-            'The DecorationImage was:\n'
-            '  $_details\n'
-            'The ImageConfiguration was:\n'
-            '  $configuration'
-          );
+          throw FlutterError.fromParts(<DiagnosticsNode>[
+            ErrorSummary('DecorationImage.matchTextDirection can only be used when a TextDirection is available.'),
+            ErrorDescription(
+              'When DecorationImagePainter.paint() was called, there was no text direction provided '
+              'in the ImageConfiguration object to match.'
+            ),
+            DiagnosticsProperty<DecorationImage>('The DecorationImage was', _details, style: DiagnosticsTreeStyle.errorProperty),
+            DiagnosticsProperty<ImageConfiguration>('The ImageConfiguration was', configuration, style: DiagnosticsTreeStyle.errorProperty),
+          ]);
         }
         return true;
       }());
@@ -238,7 +258,10 @@ class DecorationImagePainter {
 
     final ImageStream newImageStream = _details.image.resolve(configuration);
     if (newImageStream.key != _imageStream?.key) {
-      final ImageStreamListener listener = ImageStreamListener(_handleImage);
+      final ImageStreamListener listener = ImageStreamListener(
+        _handleImage,
+        onError: _details.onError,
+      );
       _imageStream?.removeListener(listener);
       _imageStream = newImageStream;
       _imageStream.addListener(listener);
@@ -255,7 +278,8 @@ class DecorationImagePainter {
       canvas: canvas,
       rect: rect,
       image: _image.image,
-      scale: _image.scale,
+      debugImageLabel: _image.debugLabel,
+      scale: _details.scale * _image.scale,
       colorFilter: _details.colorFilter,
       fit: _details.fit,
       alignment: _details.alignment.resolve(configuration.textDirection),
@@ -285,13 +309,35 @@ class DecorationImagePainter {
   /// After this method has been called, the object is no longer usable.
   @mustCallSuper
   void dispose() {
-    _imageStream?.removeListener(ImageStreamListener(_handleImage));
+    _imageStream?.removeListener(ImageStreamListener(
+      _handleImage,
+      onError: _details.onError,
+    ));
   }
 
   @override
   String toString() {
-    return '$runtimeType(stream: $_imageStream, image: $_image) for $_details';
+    return '${objectRuntimeType(this, 'DecorationImagePainter')}(stream: $_imageStream, image: $_image) for $_details';
   }
+}
+
+/// Used by [paintImage] to report image sizes drawn at the end of the frame.
+Map<String, ImageSizeInfo> _pendingImageSizeInfo = <String, ImageSizeInfo>{};
+
+/// [ImageSizeInfo]s that were reported on the last frame.
+///
+/// Used to prevent duplicative reports from frame to frame.
+Set<ImageSizeInfo> _lastFrameImageSizeInfo = <ImageSizeInfo>{};
+
+/// Flushes inter-frame tracking of image size information from [paintImage].
+///
+/// Has no effect if asserts are disabled.
+@visibleForTesting
+void debugFlushLastFrameImageSizeInfo() {
+  assert(() {
+    _lastFrameImageSizeInfo = <ImageSizeInfo>{};
+    return true;
+  }());
 }
 
 /// Paints an image into the given rectangle on the canvas.
@@ -366,6 +412,7 @@ void paintImage({
   @required Canvas canvas,
   @required Rect rect,
   @required ui.Image image,
+  String debugImageLabel,
   double scale = 1.0,
   ColorFilter colorFilter,
   BoxFit fit,
@@ -375,12 +422,14 @@ void paintImage({
   bool flipHorizontally = false,
   bool invertColors = false,
   FilterQuality filterQuality = FilterQuality.low,
+  bool isAntiAlias = false,
 }) {
   assert(canvas != null);
   assert(image != null);
   assert(alignment != null);
   assert(repeat != null);
   assert(flipHorizontally != null);
+  assert(isAntiAlias != null);
   if (rect.isEmpty)
     return;
   Size outputSize = rect.size;
@@ -391,8 +440,8 @@ void paintImage({
       centerSlice.left + inputSize.width - centerSlice.right,
       centerSlice.top + inputSize.height - centerSlice.bottom,
     );
-    outputSize -= sliceBorder;
-    inputSize -= sliceBorder;
+    outputSize = outputSize - sliceBorder as Size;
+    inputSize = inputSize - sliceBorder as Size;
   }
   fit ??= centerSlice == null ? BoxFit.scaleDown : BoxFit.fill;
   assert(centerSlice == null || (fit != BoxFit.none && fit != BoxFit.cover));
@@ -406,12 +455,49 @@ void paintImage({
     // as we apply a nine-patch stretch.
     assert(sourceSize == inputSize, 'centerSlice was used with a BoxFit that does not guarantee that the image is fully visible.');
   }
+
+  // Output size is fully calculated.
+  if (!kReleaseMode) {
+    final ImageSizeInfo sizeInfo = ImageSizeInfo(
+      // Some ImageProvider implementations may not have given this.
+      source: debugImageLabel ?? '<Unknown Image(${image.width}×${image.height})>',
+      imageSize: Size(image.width.toDouble(), image.height.toDouble()),
+      displaySize: outputSize,
+    );
+    // Avoid emitting events that are the same as those emitted in the last frame.
+    if (!_lastFrameImageSizeInfo.contains(sizeInfo)) {
+      final ImageSizeInfo existingSizeInfo = _pendingImageSizeInfo[sizeInfo.source];
+      if (existingSizeInfo == null || existingSizeInfo.displaySizeInBytes < sizeInfo.displaySizeInBytes) {
+        _pendingImageSizeInfo[sizeInfo.source] = sizeInfo;
+      }
+      // _pendingImageSizeInfo.add(sizeInfo);
+      if (debugOnPaintImage != null) {
+        debugOnPaintImage(sizeInfo);
+      }
+      SchedulerBinding.instance.addPostFrameCallback((Duration timeStamp) {
+        _lastFrameImageSizeInfo = _pendingImageSizeInfo.values.toSet();
+        if (_pendingImageSizeInfo.isEmpty) {
+          return;
+        }
+        developer.postEvent(
+          'Flutter.ImageSizesForFrame',
+          <Object, Object>{
+            for (ImageSizeInfo imageSizeInfo in _pendingImageSizeInfo.values)
+              imageSizeInfo.source: imageSizeInfo.toJson()
+          },
+        );
+        _pendingImageSizeInfo = <String, ImageSizeInfo>{};
+      });
+
+    }
+  }
+
   if (repeat != ImageRepeat.noRepeat && destinationSize == outputSize) {
     // There's no need to repeat the image because we're exactly filling the
     // output rect with the image.
     repeat = ImageRepeat.noRepeat;
   }
-  final Paint paint = Paint()..isAntiAlias = false;
+  final Paint paint = Paint()..isAntiAlias = isAntiAlias;
   if (colorFilter != null)
     paint.colorFilter = colorFilter;
   if (sourceSize != destinationSize) {
@@ -442,14 +528,14 @@ void paintImage({
     if (repeat == ImageRepeat.noRepeat) {
       canvas.drawImageRect(image, sourceRect, destinationRect, paint);
     } else {
-      for (Rect tileRect in _generateImageTileRects(rect, destinationRect, repeat))
+      for (final Rect tileRect in _generateImageTileRects(rect, destinationRect, repeat))
         canvas.drawImageRect(image, sourceRect, tileRect, paint);
     }
   } else {
     if (repeat == ImageRepeat.noRepeat) {
       canvas.drawImageNine(image, centerSlice, destinationRect, paint);
     } else {
-      for (Rect tileRect in _generateImageTileRects(rect, destinationRect, repeat))
+      for (final Rect tileRect in _generateImageTileRects(rect, destinationRect, repeat))
         canvas.drawImageNine(image, centerSlice, tileRect, paint);
     }
   }

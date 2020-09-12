@@ -1,6 +1,8 @@
-// Copyright 2017 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/gestures.dart';
@@ -25,7 +27,7 @@ void main() {
           },
           child: Container(),
         ),
-      )
+      ),
     );
 
     expect(semantics, includesNodeWith(
@@ -59,7 +61,7 @@ void main() {
             },
             child: Container(),
           ),
-        )
+        ),
     );
 
     expect(semantics, includesNodeWith(
@@ -122,10 +124,9 @@ void main() {
         TapGestureRecognizer: GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
           () => TapGestureRecognizer(),
           (TapGestureRecognizer instance) {
-            instance
-              ..onTap = () { logs.add('tap'); };
+            instance.onTap = () { logs.add('tap'); };
           },
-        )
+        ),
       });
     };
 
@@ -146,10 +147,9 @@ void main() {
                 HorizontalDragGestureRecognizer: GestureRecognizerFactoryWithHandlers<HorizontalDragGestureRecognizer>(
                   () => HorizontalDragGestureRecognizer(),
                   (HorizontalDragGestureRecognizer instance) {
-                    instance
-                      ..onStart = (_) { logs.add('horizontal'); };
+                    instance.onStart = (_) { logs.add('horizontal'); };
                   },
-                )
+                ),
               },
               child: hasLayoutPerformer ? _TestLayoutPerformer(performLayout: performLayout) : null,
             ),
@@ -174,7 +174,7 @@ void main() {
     semantics.dispose();
   });
 
-  group('RawGestureDetector\'s custom semantics delegate', () {
+  group("RawGestureDetector's custom semantics delegate", () {
     testWidgets('should update semantics notations when switching from the default delegate', (WidgetTester tester) async {
       final SemanticsTester semantics = SemanticsTester(tester);
       final Map<Type, GestureRecognizerFactory> gestures =
@@ -186,7 +186,7 @@ void main() {
             gestures: gestures,
             child: Container(),
           ),
-        )
+        ),
       );
 
       expect(semantics, includesNodeWith(
@@ -200,7 +200,7 @@ void main() {
             semantics: _TestSemanticsGestureDelegate(onTap: () {}),
             child: Container(),
           ),
-        )
+        ),
       );
 
       expect(semantics, includesNodeWith(
@@ -222,7 +222,7 @@ void main() {
             semantics: _TestSemanticsGestureDelegate(onTap: () {}),
             child: Container(),
           ),
-        )
+        ),
       );
 
       expect(semantics, includesNodeWith(
@@ -235,7 +235,7 @@ void main() {
             gestures: gestures,
             child: Container(),
           ),
-        )
+        ),
       );
 
       expect(semantics, includesNodeWith(
@@ -257,7 +257,7 @@ void main() {
             semantics: _TestSemanticsGestureDelegate(onTap: () {}),
             child: Container(),
           ),
-        )
+        ),
       );
 
       expect(semantics, includesNodeWith(
@@ -271,7 +271,7 @@ void main() {
             semantics: _TestSemanticsGestureDelegate(onLongPress: () {}),
             child: Container(),
           ),
-        )
+        ),
       );
 
       expect(semantics, includesNodeWith(
@@ -298,7 +298,7 @@ void main() {
             ),
             child: Container(),
           ),
-        )
+        ),
       );
 
       final int detectorId = detectorKey.currentContext.findRenderObject().debugSemantics.id;
@@ -322,7 +322,7 @@ void main() {
     });
   });
 
-  group('RawGestureDetector\'s default semantics delegate', () {
+  group("RawGestureDetector's default semantics delegate", () {
     group('should map onTap to', () {
       testWidgets('null when there is no TapGR', (WidgetTester tester) async {
         final SemanticsTester semantics = SemanticsTester(tester);
@@ -332,7 +332,7 @@ void main() {
               gestures: _buildGestureMap(null, null),
               child: Container(),
             ),
-          )
+          ),
         );
 
         expect(semantics, isNot(includesNodeWith(
@@ -353,7 +353,7 @@ void main() {
               ),
               child: Container(),
             ),
-          )
+          ),
         );
 
         expect(semantics, includesNodeWith(
@@ -380,11 +380,11 @@ void main() {
                     ..onTapDown = (_) {logs.add('tapDown');}
                     ..onTapCancel = () {logs.add('WRONG');}
                     ..onSecondaryTapDown = (_) {logs.add('WRONG');};
-                }
+                },
               ),
               child: Container(),
             ),
-          )
+          ),
         );
 
         final int detectorId = detectorKey.currentContext.findRenderObject().debugSemantics.id;
@@ -404,7 +404,7 @@ void main() {
               gestures: _buildGestureMap(null, null),
               child: Container(),
             ),
-          )
+          ),
         );
 
         expect(semantics, isNot(includesNodeWith(
@@ -425,7 +425,7 @@ void main() {
               ),
               child: Container(),
             ),
-          )
+          ),
         );
 
         expect(semantics, includesNodeWith(
@@ -452,11 +452,11 @@ void main() {
                     ..onLongPressUp = () {logs.add('LPUp');}
                     ..onLongPressEnd = (_) {logs.add('LPEnd');}
                     ..onLongPressMoveUpdate = (_) {logs.add('WRONG');};
-                }
+                },
               ),
               child: Container(),
             ),
-          )
+          ),
         );
 
         final int detectorId = detectorKey.currentContext.findRenderObject().debugSemantics.id;
@@ -476,7 +476,7 @@ void main() {
               gestures: _buildGestureMap(null, null),
               child: Container(),
             ),
-          )
+          ),
         );
 
         expect(semantics, isNot(includesNodeWith(
@@ -497,7 +497,7 @@ void main() {
               ),
               child: Container(),
             ),
-          )
+          ),
         );
 
         expect(semantics, includesNodeWith(
@@ -513,7 +513,7 @@ void main() {
               ),
               child: Container(),
             ),
-          )
+          ),
         );
 
         expect(semantics, includesNodeWith(
@@ -537,7 +537,7 @@ void main() {
               ..onEnd = (_) {logs.add('HEnd');}
               ..onUpdate = (_) {logs.add('HUpdate');}
               ..onCancel = () {logs.add('WRONG');};
-          }
+          },
         )..addAll(_buildGestureMap(
           () => PanGestureRecognizer(),
           (PanGestureRecognizer pan) {
@@ -547,7 +547,7 @@ void main() {
               ..onEnd = (_) {logs.add('PEnd');}
               ..onUpdate = (_) {logs.add('PUpdate');}
               ..onCancel = () {logs.add('WRONG');};
-          }
+          },
         ));
         await tester.pumpWidget(
           Center(
@@ -556,7 +556,7 @@ void main() {
               gestures: gestures,
               child: Container(),
             ),
-          )
+          ),
         );
 
         final int detectorId = detectorKey.currentContext.findRenderObject().debugSemantics.id;
@@ -582,7 +582,7 @@ void main() {
               gestures: _buildGestureMap(null, null),
               child: Container(),
             ),
-          )
+          ),
         );
 
         expect(semantics, isNot(includesNodeWith(
@@ -603,7 +603,7 @@ void main() {
               ),
               child: Container(),
             ),
-          )
+          ),
         );
 
         expect(semantics, includesNodeWith(
@@ -628,7 +628,7 @@ void main() {
               ..onEnd = (_) {logs.add('VEnd');}
               ..onUpdate = (_) {logs.add('VUpdate');}
               ..onCancel = () {logs.add('WRONG');};
-          }
+          },
         )..addAll(_buildGestureMap(
           () => PanGestureRecognizer(),
           (PanGestureRecognizer pan) {
@@ -638,7 +638,7 @@ void main() {
               ..onEnd = (_) {logs.add('PEnd');}
               ..onUpdate = (_) {logs.add('PUpdate');}
               ..onCancel = () {logs.add('WRONG');};
-          }
+          },
         ));
         await tester.pumpWidget(
           Center(
@@ -647,7 +647,7 @@ void main() {
               gestures: gestures,
               child: Container(),
             ),
-          )
+          ),
         );
 
         final int detectorId = detectorKey.currentContext.findRenderObject().debugSemantics.id;
@@ -672,7 +672,7 @@ void main() {
             gestures: _buildGestureMap(() => LongPressGestureRecognizer(), null),
             child: Container(),
           ),
-        )
+        ),
       );
 
       expect(semantics, includesNodeWith(
@@ -685,7 +685,7 @@ void main() {
             gestures: _buildGestureMap(() => TapGestureRecognizer(), null),
             child: Container(),
           ),
-        )
+        ),
       );
 
       expect(semantics, includesNodeWith(

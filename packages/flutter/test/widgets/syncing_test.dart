@@ -1,12 +1,19 @@
-// Copyright 2015 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/widgets.dart';
 
 class TestWidget extends StatefulWidget {
-  const TestWidget({ this.child, this.persistentState, this.syncedState });
+  const TestWidget({
+    Key key,
+    this.child,
+    this.persistentState,
+    this.syncedState,
+  }) : super(key: key);
 
   final Widget child;
   final int persistentState;
@@ -52,7 +59,7 @@ void main() {
             child: Container(),
           ),
         ),
-      )
+      ),
     );
 
     final TestWidgetState state = tester.state(find.byType(TestWidget));
@@ -68,7 +75,7 @@ void main() {
             child: Container(),
           ),
         ),
-      )
+      ),
     );
 
     expect(state.persistentState, equals(1));
@@ -86,7 +93,7 @@ void main() {
             child: Container(),
           ),
         ),
-      )
+      ),
     );
 
     TestWidgetState state = tester.state(find.byType(TestWidget));
@@ -100,7 +107,7 @@ void main() {
           persistentState: 11,
           child: Container(),
         ),
-      )
+      ),
     );
 
     state = tester.state(find.byType(TestWidget));
@@ -131,7 +138,7 @@ void main() {
             child: b,
           ),
         ],
-      )
+      ),
     );
 
     TestWidgetState first, second;
@@ -158,7 +165,7 @@ void main() {
             child: b,
           ),
         ],
-      )
+      ),
     );
 
     first = tester.state(find.byWidget(a));
@@ -187,7 +194,7 @@ void main() {
             child: a,
           ),
         ],
-      )
+      ),
     );
 
     first = tester.state(find.byWidget(b));

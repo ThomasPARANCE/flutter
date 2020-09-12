@@ -1,6 +1,8 @@
-// Copyright 2015 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
@@ -120,8 +122,7 @@ void main() {
       1, 2,
       3, 4, 5, // visible
       6, 7,
-    ]
-    ));
+    ]));
     callbackTracker.clear();
   });
 
@@ -260,9 +261,8 @@ void main() {
       ),
     );
 
-    DecoratedBox widget = tester.firstWidget(find.byType(DecoratedBox));
-    BoxDecoration decoration = widget.decoration;
-    expect(decoration.color, equals(Colors.blue));
+    Container widget = tester.firstWidget(find.byType(Container));
+    expect(widget.color, equals(Colors.blue));
 
     setState(() {
       themeData = ThemeData(primarySwatch: Colors.green);
@@ -270,9 +270,8 @@ void main() {
 
     await tester.pump();
 
-    widget = tester.firstWidget(find.byType(DecoratedBox));
-    decoration = widget.decoration;
-    expect(decoration.color, equals(Colors.green));
+    widget = tester.firstWidget(find.byType(Container));
+    expect(widget.color, equals(Colors.green));
   });
 
   testWidgets('ListView padding', (WidgetTester tester) async {
@@ -336,8 +335,8 @@ void main() {
         ' │   GrowthDirection.forward, ScrollDirection.idle, scrollOffset:\n'
         ' │   0.0, remainingPaintExtent: 600.0, crossAxisExtent: 800.0,\n'
         ' │   crossAxisDirection: AxisDirection.right,\n'
-        ' │   viewportMainAxisExtent: 600.0, remainingCacheExtent: 850.0\n'
-        ' │   cacheOrigin: 0.0 )\n'
+        ' │   viewportMainAxisExtent: 600.0, remainingCacheExtent: 850.0,\n'
+        ' │   cacheOrigin: 0.0)\n'
         ' │ geometry: SliverGeometry(scrollExtent: 300.0, paintExtent: 300.0,\n'
         ' │   maxPaintExtent: 300.0, cacheExtent: 300.0)\n'
         ' │ currently live children: 0 to 2\n'
@@ -459,7 +458,7 @@ void main() {
                   ),
               ),
             ),
-        )
+        ),
     );
 
     final RenderSliverList list = tester.renderObject(find.byType(SliverList));
@@ -490,7 +489,7 @@ void main() {
                     ),
                 ),
             ),
-        )
+        ),
     );
 
     final RenderObject renderObject = tester.renderObject(find.byType(Scrollable));
@@ -516,7 +515,7 @@ void main() {
               ),
             ),
           ),
-        )
+        ),
     );
 
     final RenderObject renderObject = tester.renderObject(find.byType(Scrollable));

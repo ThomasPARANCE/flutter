@@ -1,6 +1,8 @@
-// Copyright 2018 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
@@ -20,12 +22,9 @@ void main() {
 
     await expectLater(
       find.byType(RepaintBoundary),
-      matchesGoldenFile(
-        'invert_colors_test.0.png',
-        version: null,
-      ),
+      matchesGoldenFile('invert_colors_test.0.png'),
     );
-  }, skip: isBrowser);
+  });
 
   testWidgets('InvertColors and ColorFilter',  (WidgetTester tester) async {
     await tester.pumpWidget(const RepaintBoundary(
@@ -41,12 +40,9 @@ void main() {
 
     await expectLater(
       find.byType(RepaintBoundary),
-      matchesGoldenFile(
-        'invert_colors_test.1.png',
-        version: null,
-      ),
+      matchesGoldenFile('invert_colors_test.1.png'),
     );
-  }, skip: isBrowser);
+  });
 }
 
 // Draws a rectangle sized by the parent widget with [color], [colorFilter],

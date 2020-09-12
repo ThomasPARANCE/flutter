@@ -1,6 +1,8 @@
-// Copyright 2017 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 // This files contains message codec tests that are supported both on the Web
 // and in the VM. For VM-only tests see message_codecs_vm_test.dart.
@@ -148,8 +150,10 @@ void main() {
       checkEncoding<dynamic>(
         standard,
         1.0,
-        <int>[6, 0, 0, 0, 0, 0, 0, 0,
-              0, 0, 0, 0, 0, 0, 0xf0, 0x3f],
+        <int>[
+          6, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0xf0, 0x3f,
+        ],
       );
     });
   });

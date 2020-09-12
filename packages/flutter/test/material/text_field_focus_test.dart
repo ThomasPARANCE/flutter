@@ -1,6 +1,8 @@
-// Copyright 2017 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +27,7 @@ void main() {
     );
 
     expect(tester.testTextInput.isVisible, isTrue);
+    expect(focusNode.hasPrimaryFocus, isTrue);
 
     final BuildContext context = tester.element(find.byType(TextField));
 
@@ -40,11 +43,7 @@ void main() {
     Navigator.of(tester.element(find.text('Dialog'))).pop();
     await tester.pump();
 
-    expect(tester.testTextInput.isVisible, isFalse);
-
-    await tester.tap(find.byType(TextField));
-    await tester.idle();
-
+    expect(focusNode.hasPrimaryFocus, isTrue);
     expect(tester.testTextInput.isVisible, isTrue);
 
     await tester.pumpWidget(Container());

@@ -1,6 +1,8 @@
-// Copyright 2015 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -92,7 +94,7 @@ class Theme extends StatelessWidget {
   /// Widget build(BuildContext context) {
   ///   return Text(
   ///     'Example',
-  ///     style: Theme.of(context).textTheme.title,
+  ///     style: Theme.of(context).textTheme.headline6,
   ///   );
   /// }
   /// ```
@@ -116,7 +118,7 @@ class Theme extends StatelessWidget {
   ///         return Center(
   ///           child: Text(
   ///             'Example',
-  ///             style: Theme.of(context).textTheme.title,
+  ///             style: Theme.of(context).textTheme.headline6,
   ///           ),
   ///         );
   ///       },
@@ -125,7 +127,7 @@ class Theme extends StatelessWidget {
   /// }
   /// ```
   static ThemeData of(BuildContext context, { bool shadowThemeOnly = false }) {
-    final _InheritedTheme inheritedTheme = context.inheritFromWidgetOfExactType(_InheritedTheme);
+    final _InheritedTheme inheritedTheme = context.dependOnInheritedWidgetOfExactType<_InheritedTheme>();
     if (shadowThemeOnly) {
       if (inheritedTheme == null || inheritedTheme.theme.isMaterialAppTheme)
         return null;
@@ -153,7 +155,7 @@ class Theme extends StatelessWidget {
           data: data.iconTheme,
           child: child,
         ),
-      )
+      ),
     );
   }
 
@@ -164,7 +166,7 @@ class Theme extends StatelessWidget {
   }
 }
 
-class _InheritedTheme extends InheritedWidget {
+class _InheritedTheme extends InheritedTheme {
   const _InheritedTheme({
     Key key,
     @required this.theme,
@@ -173,6 +175,12 @@ class _InheritedTheme extends InheritedWidget {
        super(key: key, child: child);
 
   final Theme theme;
+
+  @override
+  Widget wrap(BuildContext context, Widget child) {
+    final _InheritedTheme ancestorTheme = context.findAncestorWidgetOfExactType<_InheritedTheme>();
+    return identical(this, ancestorTheme) ? child : Theme(data: theme.data, child: child);
+  }
 
   @override
   bool updateShouldNotify(_InheritedTheme old) => theme.data != old.theme.data;
@@ -221,10 +229,11 @@ class AnimatedTheme extends ImplicitlyAnimatedWidget {
     this.isMaterialAppTheme = false,
     Curve curve = Curves.linear,
     Duration duration = kThemeAnimationDuration,
+    VoidCallback onEnd,
     @required this.child,
   }) : assert(child != null),
        assert(data != null),
-       super(key: key, curve: curve, duration: duration);
+       super(key: key, curve: curve, duration: duration, onEnd: onEnd);
 
   /// Specifies the color and typography values for descendant widgets.
   final ThemeData data;
@@ -246,8 +255,8 @@ class _AnimatedThemeState extends AnimatedWidgetBaseState<AnimatedTheme> {
 
   @override
   void forEachTween(TweenVisitor<dynamic> visitor) {
-    // TODO(ianh): Use constructor tear-offs when it becomes possible
-    _data = visitor(_data, widget.data, (dynamic value) => ThemeDataTween(begin: value));
+    // TODO(ianh): Use constructor tear-offs when it becomes possible, https://github.com/dart-lang/sdk/issues/10659
+    _data = visitor(_data, widget.data, (dynamic value) => ThemeDataTween(begin: value as ThemeData)) as ThemeDataTween;
     assert(_data != null);
   }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2019 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -11,7 +11,7 @@ import 'package:flutter_devicelab/framework/utils.dart';
 import 'package:path/path.dart' as path;
 
 final String gradlew = Platform.isWindows ? 'gradlew.bat' : 'gradlew';
-final String gradlewExecutable = Platform.isWindows ? gradlew : './$gradlew';
+final String gradlewExecutable = Platform.isWindows ? '.\\$gradlew' : './$gradlew';
 
 /// Tests that AARs can be built on module projects.
 Future<void> main() async {
@@ -24,11 +24,11 @@ Future<void> main() async {
       return TaskResult.failure('Could not find Java');
     print('\nUsing JAVA_HOME=$javaHome');
 
-    section('Create module project');
-
     final Directory tempDir = Directory.systemTemp.createTempSync('flutter_module_test.');
     final Directory projectDir = Directory(path.join(tempDir.path, 'hello'));
     try {
+      section('Create module project');
+
       await inDirectory(tempDir, () async {
         await flutter(
           'create',
@@ -36,15 +36,40 @@ Future<void> main() async {
         );
       });
 
-      section('Add plugins');
+      section('Create plugin that supports android platform');
 
-      final File pubspec = File(path.join(projectDir.path, 'pubspec.yaml'));
-      String content = pubspec.readAsStringSync();
+      await inDirectory(tempDir, () async {
+        await flutter(
+          'create',
+          options: <String>['--org', 'io.flutter.devicelab', '--template', 'plugin', '--platforms=android', 'plugin_with_android'],
+        );
+      });
+
+      section('Create plugin that doesn\'t support android project');
+
+      await inDirectory(tempDir, () async {
+        await flutter(
+          'create',
+          options: <String>['--org', 'io.flutter.devicelab', '--template', 'plugin', '--platforms=ios', 'plugin_without_android'],
+        );
+      });
+
+      section('Add plugins to pubspec.yaml');
+
+      final File modulePubspec = File(path.join(projectDir.path, 'pubspec.yaml'));
+      String content = modulePubspec.readAsStringSync();
       content = content.replaceFirst(
         '\ndependencies:\n',
-        '\ndependencies:\n  device_info:\n  package_info:\n',
+        '\ndependencies:\n'
+          '  plugin_with_android:\n'
+          '    path: ../plugin_with_android\n'
+          '  plugin_without_android:\n'
+          '    path: ../plugin_without_android\n',
       );
-      pubspec.writeAsStringSync(content, flush: true);
+      modulePubspec.writeAsStringSync(content, flush: true);
+
+      section('Run packages get in module project');
+
       await inDirectory(projectDir, () async {
         await flutter(
           'packages',
@@ -69,6 +94,8 @@ Future<void> main() async {
         'repo',
       );
 
+      section('Check release Maven artifacts');
+
       checkFileExists(path.join(
         repoPath,
         'io',
@@ -80,7 +107,7 @@ Future<void> main() async {
         'flutter_release-1.0.aar',
       ));
 
-      checkFileExists(path.join(
+      final String releasePom = path.join(
         repoPath,
         'io',
         'flutter',
@@ -89,87 +116,67 @@ Future<void> main() async {
         'flutter_release',
         '1.0',
         'flutter_release-1.0.pom',
-      ));
+      );
+
+      checkFileExists(releasePom);
 
       checkFileExists(path.join(
-        repoPath,
-        'io',
-        'flutter',
-        'plugins',
-        'deviceinfo',
-        'device_info_release',
-        '1.0',
-        'device_info_release-1.0.aar',
-      ));
-
-      checkFileExists(path.join(
-        repoPath,
-        'io',
-        'flutter',
-        'plugins',
-        'deviceinfo',
-        'device_info_release',
-        '1.0',
-        'device_info_release-1.0.pom',
-      ));
-
-      checkFileExists(path.join(
-        repoPath,
-        'io',
-        'flutter',
-        'plugins',
-        'packageinfo',
-        'package_info_release',
-        '1.0',
-        'package_info_release-1.0.aar',
-      ));
-
-      checkFileExists(path.join(
-        repoPath,
-        'io',
-        'flutter',
-        'plugins',
-        'packageinfo',
-        'package_info_release',
-        '1.0',
-        'package_info_release-1.0.pom',
-      ));
-
-      section('Check assets in release AAR');
-
-      final Iterable<String> releaseAar = await getFilesInAar(path.join(
         repoPath,
         'io',
         'flutter',
         'devicelab',
-        'hello',
-        'flutter_release',
+        'plugin_with_android',
+        'plugin_with_android_release',
         '1.0',
-        'flutter_release-1.0.aar',
+        'plugin_with_android_release-1.0.aar',
       ));
 
-      checkItContains<String>(<String>[
-        'assets/flutter_assets/FontManifest.json',
-        'assets/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf',
-      ], releaseAar);
+      checkFileExists(path.join(
+        repoPath,
+        'io',
+        'flutter',
+        'devicelab',
+        'plugin_with_android',
+        'plugin_with_android_release',
+        '1.0',
+        'plugin_with_android_release-1.0.pom',
+      ));
 
-      section('Check AOT blobs in release AAR');
+      section('Check AOT blobs in release POM');
 
-      checkItContains<String>(<String>[
-        'jni/arm64-v8a/libapp.so',
-        'jni/arm64-v8a/libflutter.so',
-        'jni/armeabi-v7a/libapp.so',
-        'jni/armeabi-v7a/libflutter.so',
-      ], releaseAar);
+      checkFileContains(<String>[
+        'flutter_embedding_release',
+        'armeabi_v7a_release',
+        'arm64_v8a_release',
+        'x86_64_release',
+        'plugin_with_android_release',
+      ], releasePom);
 
-      section('Build debug AAR');
+      section('Check assets in release AAR');
 
-      await inDirectory(projectDir, () async {
-        await flutter(
-          'build',
-          options: <String>['aar', '--verbose', '--debug'],
-        );
-      });
+      checkCollectionContains<String>(
+        <String>[
+          ...flutterAssets,
+          // AOT snapshots
+          'jni/arm64-v8a/libapp.so',
+          'jni/armeabi-v7a/libapp.so',
+          'jni/x86_64/libapp.so',
+        ],
+        await getFilesInAar(
+          path.join(
+            repoPath,
+            'io',
+            'flutter',
+            'devicelab',
+            'hello',
+            'flutter_release',
+            '1.0',
+            'flutter_release-1.0.aar',
+          )
+        )
+      );
+
+      section('Check debug Maven artifacts');
 
       checkFileExists(path.join(
         repoPath,
@@ -182,7 +189,7 @@ Future<void> main() async {
         'flutter_debug-1.0.aar',
       ));
 
-      checkFileExists(path.join(
+      final String debugPom = path.join(
         repoPath,
         'io',
         'flutter',
@@ -191,52 +198,42 @@ Future<void> main() async {
         'flutter_debug',
         '1.0',
         'flutter_debug-1.0.pom',
+      );
+
+      checkFileExists(debugPom);
+
+      checkFileExists(path.join(
+        repoPath,
+        'io',
+        'flutter',
+        'devicelab',
+        'plugin_with_android',
+        'plugin_with_android_debug',
+        '1.0',
+        'plugin_with_android_debug-1.0.aar',
       ));
 
       checkFileExists(path.join(
         repoPath,
         'io',
         'flutter',
-        'plugins',
-        'deviceinfo',
-        'device_info_debug',
+        'devicelab',
+        'plugin_with_android',
+        'plugin_with_android_debug',
         '1.0',
-        'device_info_debug-1.0.aar',
+        'plugin_with_android_debug-1.0.pom',
       ));
 
-      checkFileExists(path.join(
-        repoPath,
-        'io',
-        'flutter',
-        'plugins',
-        'deviceinfo',
-        'device_info_debug',
-        '1.0',
-        'device_info_debug-1.0.pom',
-      ));
+      section('Check AOT blobs in debug POM');
 
-      checkFileExists(path.join(
-        repoPath,
-        'io',
-        'flutter',
-        'plugins',
-        'packageinfo',
-        'package_info_debug',
-        '1.0',
-        'package_info_debug-1.0.aar',
-      ));
-
-      checkFileExists(path.join(
-        repoPath,
-        'io',
-        'flutter',
-        'plugins',
-        'packageinfo',
-        'package_info_debug',
-        '1.0',
-        'package_info_debug-1.0.pom',
-      ));
-
+      checkFileContains(<String>[
+        'flutter_embedding_debug',
+        'x86_debug',
+        'x86_64_debug',
+        'armeabi_v7a_debug',
+        'arm64_v8a_debug',
+        'plugin_with_android_debug',
+      ], debugPom);
 
       section('Check assets in debug AAR');
 
@@ -251,22 +248,9 @@ Future<void> main() async {
         'flutter_debug-1.0.aar',
       ));
 
-      checkItContains<String>(<String>[
-        'assets/flutter_assets/FontManifest.json',
-        'assets/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf',
-        // JIT snapshots.
-        'assets/flutter_assets/isolate_snapshot_data',
-        'assets/flutter_assets/kernel_blob.bin',
-        'assets/flutter_assets/vm_snapshot_data',
-      ], debugAar);
-
-      section('Check AOT blobs in debug AAR');
-
-      checkItContains<String>(<String>[
-        'jni/arm64-v8a/libflutter.so',
-        'jni/armeabi-v7a/libflutter.so',
-        'jni/x86/libflutter.so',
-        'jni/x86_64/libflutter.so',
+      checkCollectionContains<String>(<String>[
+        ...flutterAssets,
+        ...debugAssets,
       ], debugAar);
 
       return TaskResult.success(null);

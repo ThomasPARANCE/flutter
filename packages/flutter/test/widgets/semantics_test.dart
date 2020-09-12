@@ -1,6 +1,8 @@
-// Copyright 2015 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'dart:math';
 import 'dart:ui';
@@ -37,7 +39,7 @@ void main() {
           textDirection: TextDirection.ltr,
           child: Container(),
         ),
-      )
+      ),
     );
 
     expect(semantics, hasSemantics(
@@ -94,7 +96,7 @@ void main() {
               ),
             ],
           ),
-        ]
+        ],
       ),
       ignoreId: true,
       ignoreRect: true,
@@ -136,7 +138,7 @@ void main() {
               ),
             ],
           ),
-        ]
+        ],
       ),
       ignoreId: true,
       ignoreRect: true,
@@ -189,7 +191,7 @@ void main() {
           label: 'test1',
           textDirection: TextDirection.ltr,
         ),
-      ]
+      ],
     );
 
     await tester.pumpWidget(
@@ -216,7 +218,7 @@ void main() {
           label: 'test1',
           textDirection: TextDirection.rtl,
         ),
-      ]
+      ],
     );
 
     await tester.pumpWidget(
@@ -257,7 +259,7 @@ void main() {
           value: 'value',
           textDirection: TextDirection.ltr,
         ),
-      ]
+      ],
     );
 
     expect(semantics, hasSemantics(expectedSemantics, ignoreTransform: true, ignoreRect: true, ignoreId: true));
@@ -293,7 +295,7 @@ void main() {
           hint: 'hint one\nhint two',
           textDirection: TextDirection.ltr,
         ),
-      ]
+      ],
     );
 
     expect(semantics, hasSemantics(expectedSemantics, ignoreTransform: true, ignoreRect: true, ignoreId: true));
@@ -312,14 +314,14 @@ void main() {
             children: <Widget>[
               Semantics(
                 value: 'value one',
-                child: Container(
+                child: const SizedBox(
                   height: 10.0,
                   width: 10.0,
                 ),
               ),
               Semantics(
                 value: 'value two',
-                child: Container(
+                child: const SizedBox(
                   height: 10.0,
                   width: 10.0,
                 ),
@@ -342,7 +344,7 @@ void main() {
               value: 'value two',
               textDirection: TextDirection.ltr,
             ),
-          ]
+          ],
         ),
       ],
     );
@@ -380,7 +382,7 @@ void main() {
           value: 'value',
           textDirection: TextDirection.ltr,
         ),
-      ]
+      ],
     );
 
     expect(semantics, hasSemantics(expectedSemantics, ignoreTransform: true, ignoreRect: true, ignoreId: true));
@@ -412,7 +414,7 @@ void main() {
         onSetSelection: (TextSelection _) => performedActions.add(SemanticsAction.setSelection),
         onDidGainAccessibilityFocus: () => performedActions.add(SemanticsAction.didGainAccessibilityFocus),
         onDidLoseAccessibilityFocus: () => performedActions.add(SemanticsAction.didLoseAccessibilityFocus),
-      )
+      ),
     );
 
     final Set<SemanticsAction> allActions = SemanticsAction.values.values.toSet()
@@ -436,7 +438,7 @@ void main() {
     // Do the actions work?
     final SemanticsOwner semanticsOwner = tester.binding.pipelineOwner.semanticsOwner;
     int expectedLength = 1;
-    for (SemanticsAction action in allActions) {
+    for (final SemanticsAction action in allActions) {
       switch (action) {
         case SemanticsAction.moveCursorBackwardByCharacter:
         case SemanticsAction.moveCursorForwardByCharacter:
@@ -473,9 +475,11 @@ void main() {
           checked: true,
           selected: true,
           button: true,
+          link: true,
           textField: true,
           readOnly: true,
           focused: true,
+          focusable: true,
           inMutuallyExclusiveGroup: true,
           header: true,
           obscured: true,
@@ -484,7 +488,7 @@ void main() {
           namesRoute: true,
           image: true,
           liveRegion: true,
-        )
+        ),
     );
     final List<SemanticsFlag> flags = SemanticsFlag.values.values.toList();
     flags
@@ -538,7 +542,7 @@ void main() {
 
     expect(semantics, hasSemantics(expectedSemantics, ignoreId: true));
     semantics.dispose();
-  }, skip: isBrowser);
+  });
 
   testWidgets('Actions can be replaced without triggering semantics update', (WidgetTester tester) async {
     final SemanticsTester semantics = SemanticsTester(tester);

@@ -1,11 +1,17 @@
-// Copyright 2018 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 
 void main() {
+  tearDown(() {
+    debugDisableShadows = true;
+  });
+
   testWidgets('Shadows on BoxDecoration', (WidgetTester tester) async {
     await tester.pumpWidget(
       Center(
@@ -23,26 +29,19 @@ void main() {
     );
     await expectLater(
       find.byType(Container),
-      matchesGoldenFile(
-        'shadow.BoxDecoration.disabled.png',
-        version: null,
-      ),
+      matchesGoldenFile('shadow.BoxDecoration.disabled.png'),
     );
     debugDisableShadows = false;
     tester.binding.reassembleApplication();
     await tester.pump();
     await expectLater(
       find.byType(Container),
-      matchesGoldenFile(
-        'shadow.BoxDecoration.enabled.png',
-        version: null,
-      ),
+      matchesGoldenFile('shadow.BoxDecoration.enabled.png'),
     );
     debugDisableShadows = true;
-  }, skip: isBrowser);
+  });
 
-  testWidgets('Shadows on ShapeDecoration', (WidgetTester tester) async {
-    debugDisableShadows = false;
+  group('Shadows on ShapeDecoration', () {
     Widget build(int elevation) {
       return Center(
         child: RepaintBoundary(
@@ -58,17 +57,17 @@ void main() {
         ),
       );
     }
-    for (int elevation in kElevationToShadow.keys) {
-      await tester.pumpWidget(build(elevation));
-      await expectLater(
-        find.byType(Container),
-        matchesGoldenFile(
-          'shadow.ShapeDecoration.$elevation.png',
-          version: null,
-        ),
-      );
+    for (final int elevation in kElevationToShadow.keys) {
+      testWidgets('elevation $elevation', (WidgetTester tester) async {
+        debugDisableShadows = false;
+        await tester.pumpWidget(build(elevation));
+        await expectLater(
+          find.byType(Container),
+          matchesGoldenFile('shadow.ShapeDecoration.$elevation.png'),
+        );
+        debugDisableShadows = true;
+      });
     }
-    debugDisableShadows = true;
   });
 
   testWidgets('Shadows with PhysicalLayer', (WidgetTester tester) async {
@@ -92,26 +91,19 @@ void main() {
     );
     await expectLater(
       find.byType(Container),
-      matchesGoldenFile(
-        'shadow.PhysicalModel.disabled.png',
-        version: null,
-      ),
+      matchesGoldenFile('shadow.PhysicalModel.disabled.png'),
     );
     debugDisableShadows = false;
     tester.binding.reassembleApplication();
     await tester.pump();
     await expectLater(
       find.byType(Container),
-      matchesGoldenFile(
-        'shadow.PhysicalModel.enabled.png',
-        version: null,
-      ),
+      matchesGoldenFile('shadow.PhysicalModel.enabled.png'),
     );
     debugDisableShadows = true;
-  }, skip: isBrowser);
+  });
 
-  testWidgets('Shadows with PhysicalShape', (WidgetTester tester) async {
-    debugDisableShadows = false;
+  group('Shadows with PhysicalShape', () {
     Widget build(double elevation) {
       return Center(
         child: RepaintBoundary(
@@ -120,7 +112,8 @@ void main() {
             color: Colors.yellow[200],
             child: PhysicalShape(
               color: Colors.green[900],
-              clipper: ShapeBorderClipper(shape: BeveledRectangleBorder(borderRadius: BorderRadius.circular(20.0))),
+              clipper: ShapeBorderClipper(shape: BeveledRectangleBorder(
+                borderRadius: BorderRadius.circular(20.0))),
               elevation: elevation,
               child: const SizedBox(
                 height: 100.0,
@@ -131,16 +124,17 @@ void main() {
         ),
       );
     }
-    for (int elevation in kElevationToShadow.keys) {
-      await tester.pumpWidget(build(elevation.toDouble()));
-      await expectLater(
-        find.byType(Container),
-        matchesGoldenFile(
-          'shadow.PhysicalShape.$elevation.png',
-          version: 1,
-        ),
-      );
+
+    for (final int elevation in kElevationToShadow.keys) {
+      testWidgets('elevation $elevation', (WidgetTester tester) async {
+        debugDisableShadows = false;
+        await tester.pumpWidget(build(elevation.toDouble()));
+        await expectLater(
+          find.byType(Container),
+          matchesGoldenFile('shadow.PhysicalShape.$elevation.png'),
+        );
+        debugDisableShadows = true;
+      });
     }
-    debugDisableShadows = true;
   });
 }

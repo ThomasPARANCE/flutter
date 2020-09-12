@@ -1,6 +1,8 @@
-// Copyright 2016 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -44,7 +46,7 @@ void main() {
         child: SizedBox(
           key: patient,
         ),
-      )
+      ),
     );
     expect(patient.currentContext.size, equals(const Size(0.0, 0.0)));
 
@@ -54,7 +56,7 @@ void main() {
           key: patient,
           height: 0.0,
         ),
-      )
+      ),
     );
     expect(patient.currentContext.size, equals(const Size(0.0, 0.0)));
 
@@ -65,7 +67,7 @@ void main() {
           width: 0.0,
           height: 0.0,
         ),
-      )
+      ),
     );
     expect(patient.currentContext.size, equals(const Size(0.0, 0.0)));
 
@@ -76,7 +78,7 @@ void main() {
           width: 100.0,
           height: 100.0,
         ),
-      )
+      ),
     );
     expect(patient.currentContext.size, equals(const Size(100.0, 100.0)));
 
@@ -87,7 +89,7 @@ void main() {
           width: 1000.0,
           height: 1000.0,
         ),
-      )
+      ),
     );
     expect(patient.currentContext.size, equals(const Size(800.0, 600.0)));
 
@@ -96,7 +98,7 @@ void main() {
         child: SizedBox.expand(
           key: patient,
         ),
-      )
+      ),
     );
     expect(patient.currentContext.size, equals(const Size(800.0, 600.0)));
 
@@ -105,7 +107,7 @@ void main() {
         child: SizedBox.shrink(
           key: patient,
         ),
-      )
+      ),
     );
     expect(patient.currentContext.size, equals(const Size(0.0, 0.0)));
   });
@@ -119,7 +121,7 @@ void main() {
           key: patient,
           child: Container(),
         ),
-      )
+      ),
     );
     expect(patient.currentContext.size, equals(const Size(800.0, 600.0)));
 
@@ -130,7 +132,7 @@ void main() {
           height: 0.0,
           child: Container(),
         ),
-      )
+      ),
     );
     expect(patient.currentContext.size, equals(const Size(800.0, 0.0)));
 
@@ -142,7 +144,7 @@ void main() {
           height: 0.0,
           child: Container(),
         ),
-      )
+      ),
     );
     expect(patient.currentContext.size, equals(const Size(0.0, 0.0)));
 
@@ -154,7 +156,7 @@ void main() {
           height: 100.0,
           child: Container(),
         ),
-      )
+      ),
     );
     expect(patient.currentContext.size, equals(const Size(100.0, 100.0)));
 
@@ -166,7 +168,7 @@ void main() {
           height: 1000.0,
           child: Container(),
         ),
-      )
+      ),
     );
     expect(patient.currentContext.size, equals(const Size(800.0, 600.0)));
 
@@ -176,7 +178,7 @@ void main() {
           key: patient,
           child: Container(),
         ),
-      )
+      ),
     );
     expect(patient.currentContext.size, equals(const Size(800.0, 600.0)));
 
@@ -186,7 +188,7 @@ void main() {
           key: patient,
           child: Container(),
         ),
-      )
+      ),
     );
     expect(patient.currentContext.size, equals(const Size(0.0, 0.0)));
   });

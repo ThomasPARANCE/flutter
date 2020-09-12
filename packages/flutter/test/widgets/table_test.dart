@@ -1,6 +1,8 @@
-// Copyright 2015 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/rendering.dart';
@@ -875,7 +877,7 @@ void main() {
       ),
     );
     await tester.pumpWidget(table);
-    final RenderObjectElement element = key0.currentContext;
+    final RenderObjectElement element = key0.currentContext as RenderObjectElement;
     expect(element, hasAGoodToStringDeep);
     expect(
       element.toStringDeep(minLevel: DiagnosticLevel.info),
@@ -927,7 +929,31 @@ void main() {
 
       // Should not crash.
       expect(find.text('CRASHHH'), findsOneWidget);
-    }
+    },
+  );
+
+  testWidgets(
+    'Table widget - Default textBaseline is set to TableBaseline.alphabetic',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: Table(
+            defaultVerticalAlignment: TableCellVerticalAlignment.baseline,
+            children: const <TableRow>[
+              TableRow(
+                children: <Widget>[
+                  Text('Some Text'),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+
+      final RenderTable table = tester.renderObject(find.byType(Table));
+      expect(table.textBaseline, TextBaseline.alphabetic);
+    },
   );
 
   // TODO(ianh): Test handling of TableCell object

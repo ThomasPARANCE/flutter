@@ -1,6 +1,8 @@
-// Copyright 2019 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
@@ -13,7 +15,7 @@ void main() {
     final List<RenderBox> children = <RenderBox>[
       RenderSizedBox(const Size(400.0, 100.0)),
       RenderSizedBox(const Size(400.0, 100.0)),
-      RenderSizedBox(const Size(400.0, 100.0))
+      RenderSizedBox(const Size(400.0, 100.0)),
     ];
     final TestRenderSliverBoxChildManager childManager = TestRenderSliverBoxChildManager(
       children: children,
@@ -57,7 +59,7 @@ class TestRenderSliverBoxChildManager extends RenderSliverBoxChildManager {
     _renderObject = RenderSliverFillViewport(
       childManager: this,
     );
-    return _renderObject;
+    return _renderObject as RenderSliverFillViewport;
   }
 
   int _currentlyUpdatingChildIndex;
@@ -81,12 +83,12 @@ class TestRenderSliverBoxChildManager extends RenderSliverBoxChildManager {
 
   @override
   double estimateMaxScrollOffset(
-      SliverConstraints constraints, {
-        int firstIndex,
-        int lastIndex,
-        double leadingScrollOffset,
-        double trailingScrollOffset,
-      }) {
+    SliverConstraints constraints, {
+    int firstIndex,
+    int lastIndex,
+    double leadingScrollOffset,
+    double trailingScrollOffset,
+  }) {
     assert(lastIndex >= firstIndex);
     return children.length * (trailingScrollOffset - leadingScrollOffset) / (lastIndex - firstIndex + 1);
   }
@@ -97,7 +99,7 @@ class TestRenderSliverBoxChildManager extends RenderSliverBoxChildManager {
   @override
   void didAdoptChild(RenderBox child) {
     assert(_currentlyUpdatingChildIndex != null);
-    final SliverMultiBoxAdaptorParentData childParentData = child.parentData;
+    final SliverMultiBoxAdaptorParentData childParentData = child.parentData as SliverMultiBoxAdaptorParentData;
     childParentData.index = _currentlyUpdatingChildIndex;
   }
 

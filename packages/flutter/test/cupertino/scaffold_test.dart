@@ -1,11 +1,14 @@
-// Copyright 2017 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../painting/mocks_for_image_cache.dart';
+import '../rendering/mock_canvas.dart';
 
 /// Integration tests testing both [CupertinoPageScaffold] and [CupertinoTabScaffold].
 void main() {
@@ -51,6 +54,53 @@ void main() {
     // it's pushed down by the opaque navigation bar whose height is 44 px,
     // and the 20 px [MediaQuery] top padding is fully absorbed by the navigation bar.
     expect(tester.getRect(find.byType(Container)), const Rect.fromLTRB(0, 44, 800, 600));
+  });
+
+  testWidgets('dark mode and obstruction work', (WidgetTester tester) async {
+    const Color dynamicColor = CupertinoDynamicColor.withBrightness(
+      color: Color(0xFFF8F8F8),
+      darkColor: Color(0xEE333333),
+    );
+
+    const CupertinoDynamicColor backgroundColor = CupertinoDynamicColor.withBrightness(
+      color: Color(0xFFFFFFFF),
+      darkColor: Color(0xFF000000),
+    );
+
+    BuildContext childContext;
+    Widget scaffoldWithBrightness(Brightness brightness) {
+      return Directionality(
+        textDirection: TextDirection.ltr,
+        child: MediaQuery(
+          data: MediaQueryData(
+            platformBrightness: brightness,
+            viewInsets: const EdgeInsets.only(top: 20),
+          ),
+          child: CupertinoPageScaffold(
+            backgroundColor: backgroundColor,
+            navigationBar: const CupertinoNavigationBar(
+              middle: Text('Title'),
+              backgroundColor: dynamicColor,
+            ),
+            child: Builder(
+              builder: (BuildContext context) {
+                childContext = context;
+                return Container();
+              },
+            ),
+          ),
+        ),
+      );
+    }
+    await tester.pumpWidget(scaffoldWithBrightness(Brightness.light));
+
+    expect(MediaQuery.of(childContext).padding.top, 0);
+    expect(find.byType(CupertinoPageScaffold), paints..rect(color: backgroundColor.color));
+
+    await tester.pumpWidget(scaffoldWithBrightness(Brightness.dark));
+
+    expect(MediaQuery.of(childContext).padding.top, greaterThan(0));
+    expect(find.byType(CupertinoPageScaffold), paints..rect(color: backgroundColor.darkColor));
   });
 
   testWidgets('Contents padding from viewInsets', (WidgetTester tester) async {
@@ -111,7 +161,7 @@ void main() {
     expect(tester.getSize(find.byType(Container)).height, 600.0);
   });
 
-  testWidgets('Contents bottom padding are not consumed by viewInsets when resizeToAvoidBottomInset overriden', (WidgetTester tester) async {
+  testWidgets('Contents bottom padding are not consumed by viewInsets when resizeToAvoidBottomInset overridden', (WidgetTester tester) async {
     const Widget child = CupertinoPageScaffold(
       resizeToAvoidBottomInset: false,
       navigationBar: CupertinoNavigationBar(
@@ -126,9 +176,9 @@ void main() {
         textDirection: TextDirection.ltr,
         child: MediaQuery(
           data:  MediaQueryData(viewInsets: EdgeInsets.only(bottom: 20.0)),
-          child: child
+          child: child,
         ),
-      )
+      ),
     );
 
     final Offset initialPoint = tester.getCenter(find.byType(Placeholder));
@@ -144,7 +194,7 @@ void main() {
           ),
           child: child,
         ),
-      )
+      ),
     );
     final Offset finalPoint = tester.getCenter(find.byType(Placeholder));
     expect(initialPoint, finalPoint);
@@ -188,7 +238,7 @@ void main() {
   });
 
   testWidgets('Contents have automatic sliver padding between translucent bars', (WidgetTester tester) async {
-    final Container content = Container(height: 600.0, width: 600.0);
+    const SizedBox content = SizedBox(height: 600.0, width: 600.0);
 
     await tester.pumpWidget(
       CupertinoApp(
@@ -216,7 +266,7 @@ void main() {
                       middle: Text('Title'),
                     ),
                     child: ListView(
-                      children: <Widget>[
+                      children: const <Widget>[
                         content,
                       ],
                     ),
@@ -359,11 +409,11 @@ void main() {
       ),
     );
 
-    final DecoratedBox decoratedBox = tester.widgetList(find.byType(DecoratedBox)).elementAt(1);
+    final DecoratedBox decoratedBox = tester.widgetList(find.byType(DecoratedBox)).elementAt(1) as DecoratedBox;
     expect(decoratedBox.decoration.runtimeType, BoxDecoration);
 
-    final BoxDecoration decoration = decoratedBox.decoration;
-    expect(decoration.color, CupertinoColors.white);
+    final BoxDecoration decoration = decoratedBox.decoration as BoxDecoration;
+    expect(decoration.color, isSameColorAs(CupertinoColors.white));
   });
 
   testWidgets('Overrides background color', (WidgetTester tester) async {
@@ -376,10 +426,10 @@ void main() {
       ),
     );
 
-    final DecoratedBox decoratedBox = tester.widgetList(find.byType(DecoratedBox)).elementAt(1);
+    final DecoratedBox decoratedBox = tester.widgetList(find.byType(DecoratedBox)).elementAt(1) as DecoratedBox;
     expect(decoratedBox.decoration.runtimeType, BoxDecoration);
 
-    final BoxDecoration decoration = decoratedBox.decoration;
+    final BoxDecoration decoration = decoratedBox.decoration as BoxDecoration;
     expect(decoration.color, const Color(0xFF010203));
   });
 

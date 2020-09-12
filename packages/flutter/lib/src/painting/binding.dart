@@ -1,6 +1,8 @@
-// Copyright 2016 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'dart:typed_data' show Uint8List;
 import 'dart:ui' as ui show instantiateImageCodec, Codec;
@@ -44,9 +46,9 @@ mixin PaintingBinding on BindingBase, ServicesBinding {
   /// installation or a data wipe. The warm up does not block the main thread
   /// so there should be no "Application Not Responding" warning.
   ///
-  /// Currently the warm-up happens synchronously on the GPU thread which means
-  /// the rendering of the first frame on the GPU thread will be postponed until
-  /// the warm-up is finished.
+  /// Currently the warm-up happens synchronously on the raster thread which
+  /// means the rendering of the first frame on the raster thread will be
+  /// postponed until the warm-up is finished.
   ///
   /// See also:
   ///
@@ -69,15 +71,95 @@ mixin PaintingBinding on BindingBase, ServicesBinding {
   @protected
   ImageCache createImageCache() => ImageCache();
 
-  /// Calls through to [dart:ui] with [decodedCacheRatioCap] from [ImageCache].
-  Future<ui.Codec> instantiateImageCodec(Uint8List list) {
-    return ui.instantiateImageCodec(list);
+  /// Calls through to [dart:ui] from [ImageCache].
+  ///
+  /// The `cacheWidth` and `cacheHeight` parameters, when specified, indicate
+  /// the size to decode the image to.
+  ///
+  /// Both `cacheWidth` and `cacheHeight` must be positive values greater than
+  /// or equal to 1, or null. It is valid to specify only one of `cacheWidth`
+  /// and `cacheHeight` with the other remaining null, in which case the omitted
+  /// dimension will be scaled to maintain the aspect ratio of the original
+  /// dimensions. When both are null or omitted, the image will be decoded at
+  /// its native resolution.
+  ///
+  /// The `allowUpscaling` parameter determines whether the `cacheWidth` or
+  /// `cacheHeight` parameters are clamped to the intrinsic width and height of
+  /// the original image. By default, the dimensions are clamped to avoid
+  /// unnecessary memory usage for images. Callers that wish to display an image
+  /// above its native resolution should prefer scaling the canvas the image is
+  /// drawn into.
+  Future<ui.Codec> instantiateImageCodec(Uint8List bytes, {
+    int cacheWidth,
+    int cacheHeight,
+    bool allowUpscaling = false,
+  }) {
+    assert(cacheWidth == null || cacheWidth > 0);
+    assert(cacheHeight == null || cacheHeight > 0);
+    assert(allowUpscaling != null);
+    return ui.instantiateImageCodec(
+      bytes,
+      targetWidth: cacheWidth,
+      targetHeight: cacheHeight,
+      allowUpscaling: allowUpscaling,
+    );
   }
 
   @override
   void evict(String asset) {
     super.evict(asset);
     imageCache.clear();
+    imageCache.clearLiveImages();
+  }
+
+  @override
+  void handleMemoryPressure() {
+    super.handleMemoryPressure();
+    imageCache?.clear();
+  }
+
+  /// Listenable that notifies when the available fonts on the system have
+  /// changed.
+  ///
+  /// System fonts can change when the system installs or removes new font. To
+  /// correctly reflect the change, it is important to relayout text related
+  /// widgets when this happens.
+  ///
+  /// Objects that show text and/or measure text (e.g. via [TextPainter] or
+  /// [Paragraph]) should listen to this and redraw/remeasure.
+  Listenable get systemFonts => _systemFonts;
+  final _SystemFontsNotifier _systemFonts = _SystemFontsNotifier();
+
+  @override
+  Future<void> handleSystemMessage(Object systemMessage) async {
+    await super.handleSystemMessage(systemMessage);
+    final Map<String, dynamic> message = systemMessage as Map<String, dynamic>;
+    final String type = message['type'] as String;
+    switch (type) {
+      case 'fontsChange':
+        _systemFonts.notifyListeners();
+        break;
+    }
+    return;
+  }
+}
+
+class _SystemFontsNotifier extends Listenable {
+  final Set<VoidCallback> _systemFontsCallbacks = <VoidCallback>{};
+
+  void notifyListeners () {
+    for (final VoidCallback callback in _systemFontsCallbacks) {
+      callback();
+    }
+  }
+
+  @override
+  void addListener(VoidCallback listener) {
+    _systemFontsCallbacks.add(listener);
+  }
+  @override
+  void removeListener(VoidCallback listener) {
+    _systemFontsCallbacks.remove(listener);
   }
 }
 

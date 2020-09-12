@@ -1,6 +1,8 @@
-// Copyright 2016 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -48,7 +50,8 @@ void main() {
     final PipelineOwner pipelineOwner = PipelineOwner();
     renderView.attach(pipelineOwner);
     renderView.child = offscreen.root;
-    renderView.scheduleInitialFrame();
+    renderView.prepareInitialFrame();
+    pipelineOwner.requestVisualUpdate();
     // Lay out the onscreen in the default binding
     layout(onscreen.root, phase: EnginePhase.paint);
     expect(onscreen.child.hasSize, isTrue);
@@ -77,7 +80,8 @@ void main() {
     final PipelineOwner pipelineOwner = PipelineOwner();
     renderView.attach(pipelineOwner);
     renderView.child = offscreen.root;
-    renderView.scheduleInitialFrame();
+    renderView.prepareInitialFrame();
+    pipelineOwner.requestVisualUpdate();
     // Lay out the offscreen
     pipelineOwner.flushLayout();
     expect(offscreen.child.hasSize, isTrue);

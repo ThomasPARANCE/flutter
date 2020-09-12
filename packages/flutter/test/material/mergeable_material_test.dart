@@ -1,6 +1,8 @@
-// Copyright 2016 The Chromium Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -58,10 +60,10 @@ BorderRadius getBorderRadius(WidgetTester tester, int index) {
   final List<Element> containers = tester.elementList(find.byType(Container))
                                    .toList();
 
-  final Container container = containers[index].widget;
-  final BoxDecoration boxDecoration = container.decoration;
+  final Container container = containers[index].widget as Container;
+  final BoxDecoration boxDecoration = container.decoration as BoxDecoration;
 
-  return boxDecoration.borderRadius;
+  return boxDecoration.borderRadius as BorderRadius;
 }
 
 void main() {
@@ -404,11 +406,11 @@ void main() {
                     height: 100.0,
                   ),
                 ),
-              ]
+              ],
             ),
           ),
         ),
-      )
+      ),
     );
 
     final RenderBox box = tester.renderObject(find.byType(MergeableMaterial));
@@ -439,11 +441,11 @@ void main() {
                     height: 100.0,
                   ),
                 ),
-              ]
+              ],
             ),
           ),
         ),
-      )
+      ),
     );
 
     await tester.pump(const Duration(milliseconds: 100));
@@ -478,11 +480,11 @@ void main() {
                     height: 100.0,
                   ),
                 ),
-              ]
+              ],
             ),
           ),
         ),
-      )
+      ),
     );
 
     await tester.pump(const Duration(milliseconds: 100));
@@ -520,11 +522,11 @@ void main() {
                     height: 100.0,
                   ),
                 ),
-              ]
+              ],
             ),
           ),
         ),
-      )
+      ),
     );
 
     await tester.pump(const Duration(milliseconds: 100));
@@ -561,11 +563,11 @@ void main() {
                     height: 100.0,
                   ),
                 ),
-              ]
+              ],
             ),
           ),
         ),
-      )
+      ),
     );
 
     final RenderBox box = tester.renderObject(find.byType(MergeableMaterial));
@@ -600,11 +602,11 @@ void main() {
                     height: 100.0,
                   ),
                 ),
-              ]
+              ],
             ),
           ),
         ),
-      )
+      ),
     );
 
     expect(box.size.height, equals(300));
@@ -640,11 +642,11 @@ void main() {
                     height: 100.0,
                   ),
                 ),
-              ]
+              ],
             ),
           ),
         ),
-      )
+      ),
     );
 
     final RenderBox box = tester.renderObject(find.byType(MergeableMaterial));
@@ -672,11 +674,11 @@ void main() {
                     height: 100.0,
                   ),
                 ),
-              ]
+              ],
             ),
           ),
         ),
-      )
+      ),
     );
 
     await tester.pump();
@@ -706,11 +708,11 @@ void main() {
                     height: 100.0,
                   ),
                 ),
-              ]
+              ],
             ),
           ),
         ),
-      )
+      ),
     );
 
     final RenderBox box = tester.renderObject(find.byType(MergeableMaterial));
@@ -751,11 +753,11 @@ void main() {
                     height: 100.0,
                   ),
                 ),
-              ]
+              ],
             ),
           ),
         ),
-      )
+      ),
     );
 
     await tester.pump(const Duration(milliseconds: 100));
@@ -807,11 +809,11 @@ void main() {
                     height: 100.0,
                   ),
                 ),
-              ]
+              ],
             ),
           ),
         ),
-      )
+      ),
     );
 
     final RenderBox box = tester.renderObject(find.byType(MergeableMaterial));
@@ -841,11 +843,11 @@ void main() {
                     height: 100.0,
                   ),
                 ),
-              ]
+              ],
             ),
           ),
         ),
-      )
+      ),
     );
 
     await tester.pump(const Duration(milliseconds: 100));
@@ -885,11 +887,11 @@ void main() {
                     height: 100.0,
                   ),
                 ),
-              ]
+              ],
             ),
           ),
         ),
-      )
+      ),
     );
 
     final RenderBox box = tester.renderObject(find.byType(MergeableMaterial));
@@ -931,11 +933,11 @@ void main() {
                     height: 100.0,
                   ),
                 ),
-              ]
+              ],
             ),
           ),
         ),
-      )
+      ),
     );
 
     await tester.pump(const Duration(milliseconds: 100));
@@ -987,11 +989,11 @@ void main() {
                     height: 100.0,
                   ),
                 ),
-              ]
+              ],
             ),
           ),
         ),
-      )
+      ),
     );
 
     final RenderBox box = tester.renderObject(find.byType(MergeableMaterial));
@@ -1024,11 +1026,11 @@ void main() {
                     height: 100.0,
                   ),
                 ),
-              ]
+              ],
             ),
           ),
         ),
-      )
+      ),
     );
 
     await tester.pump(const Duration(milliseconds: 100));
@@ -1045,7 +1047,7 @@ void main() {
   });
 
   bool isDivider(Widget widget, bool top, bool bottom) {
-    final DecoratedBox box = widget;
+    final DecoratedBox box = widget as DecoratedBox;
     const BorderSide side = BorderSide(color: Color(0x1F000000), width: 0.5);
 
     return box.decoration == BoxDecoration(
@@ -1096,7 +1098,7 @@ void main() {
             ),
           ),
         ),
-      )
+      ),
     );
 
     List<Widget> boxes = tester.widgetList(find.byType(DecoratedBox)).toList();
@@ -1149,7 +1151,7 @@ void main() {
             ),
           ),
         ),
-      )
+      ),
     );
 
     // Wait for dividers to shrink.
@@ -1163,5 +1165,42 @@ void main() {
     // offset + 2 is gap
     expect(isDivider(boxes[offset + 3], false, true), isTrue);
     expect(isDivider(boxes[offset + 4], true, false), isTrue);
+  });
+
+  testWidgets('MergeableMaterial respects dividerColor', (WidgetTester tester) async {
+    const Color dividerColor = Colors.red;
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: MergeableMaterial(
+              hasDividers: true,
+              dividerColor: dividerColor,
+              children: <MergeableMaterialItem>[
+                MaterialSlice(
+                  key: ValueKey<String>('A'),
+                  child: SizedBox(
+                    width: 100.0,
+                    height: 100.0,
+                  ),
+                ),
+                MaterialSlice(
+                  key: ValueKey<String>('B'),
+                  child: SizedBox(
+                    width: 100.0,
+                    height: 100.0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final DecoratedBox decoratedBox = tester.widget(find.byType(DecoratedBox).last);
+    final BoxDecoration decoration = decoratedBox.decoration as BoxDecoration;
+    // Since we are getting the last DecoratedBox, it will have a Border.top.
+    expect(decoration.border.top.color, dividerColor);
   });
 }

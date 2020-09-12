@@ -1,6 +1,8 @@
-// Copyright 2019 The Flutter Authors. All rights reserved.
+// Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
+// @dart = 2.8
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
@@ -18,16 +20,12 @@ void main() {
     );
     await expectLater(
       find.byType(ColorFiltered),
-      matchesGoldenFile(
-        'color_filter_red.png',
-        version: 1,
-      ),
+      matchesGoldenFile('color_filter_red.png'),
     );
   });
 
   testWidgets('Color filter - sepia', (WidgetTester tester) async {
-    // TODO(dnfield): This should be const. https://github.com/dart-lang/sdk/issues/37503
-    final ColorFilter sepia = ColorFilter.matrix(<double>[
+    const ColorFilter sepia = ColorFilter.matrix(<double>[
       0.39,  0.769, 0.189, 0, 0, //
       0.349, 0.686, 0.168, 0, 0, //
       0.272, 0.534, 0.131, 0, 0, //
@@ -55,14 +53,11 @@ void main() {
             ),
           ),
         ),
-      )
+      ),
     );
     await expectLater(
       find.byType(ColorFiltered),
-      matchesGoldenFile(
-        'color_filter_sepia.png',
-        version: 1,
-      ),
+      matchesGoldenFile('color_filter_sepia.png'),
     );
   });
 
@@ -80,7 +75,7 @@ void main() {
 
     await pumpWithColor(Colors.red);
     final RenderObject renderObject = tester.firstRenderObject(find.byType(ColorFiltered));
-    final ColorFilterLayer originalLayer = renderObject.debugLayer;
+    final ColorFilterLayer originalLayer = renderObject.debugLayer as ColorFilterLayer;
     expect(originalLayer, isNotNull);
 
     // Change color to force a repaint.
